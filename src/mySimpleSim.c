@@ -83,12 +83,16 @@ void run_simplesim() {
         execute();
         mem();
         write_back();
-        printf("PC=%d: ", PC);
+        //=================================================
+        // debugging
+        //=================================================
+        /*printf("PC=%03d: ", PC);
         for (int i = 0; i < 14; i++) {
-            if (i < 5 || R[i] != 0) printf("r%d=%d, ", i, R[i]);
+            printf("r%d=%d, ", i, R[i]);
         }
-        printf("sp=%d, ra=%d.", R[14], R[15]);
-        printf("\n");
+        printf("sp=%04d, ra=%03d.", R[14], R[15]);
+        printf("\n");*/
+        //=================================================
         PC = isBranchTaken ? branchPC : PC + 4;
     }
 }
@@ -102,7 +106,7 @@ void run_simplesim() {
 void reset_proc() {
     for (int i = 0; i < 14; i++)
         R[i] = 0;
-    R[14] = 4000;
+    R[14] = 4000 - 8;
     R[15] = 0;
     PC = 0;
     for (int i = 0; i < 4000; i += 4)
@@ -174,14 +178,13 @@ void decode() {
     bit u = (instruction_word & 0x10000) >> 16;
     bit h = (instruction_word & 0x20000) >> 17;
     if (h) immx <<= 16;
-    else if (((instruction_word & 0x1000) >> 8) && !u) immx |= 0xFFFC0000; //if negative sign extension
+    else if (((instruction_word & 0x8000) >> 8) && !u) immx |= 0xFFFC0000; //if negative sign extension
     branch_target = (instruction_word & 0x7FFFFFF) << 2;
     if ((branch_target & 0x10000000) >> 28) branch_target += 0x1E0000000; // if negative extending sign
     branch_target += PC;
     //=================================================
     // OPERAND CALCULATION
     //=================================================
-    //TODO check ops?
     word opcode = (instruction_word & 0xF8000000) >> 27;
     isRet = opcode == 20;
     isSt = opcode == 15;
@@ -241,18 +244,14 @@ void execute() {
     else if (isNot) aluResult = !B;
     else if (isMov) aluResult = B;
     else if (isLsl) aluResult = A << B;
-    //TODO see lsr vs asr
     else if (isLsr) aluResult = A >> B;
-    else if (isAsr) aluResult = A >> B;
+    else if (isAsr) aluResult = (word) (((signed int) A) >> B);
 
     //=================================================
     // BRANCH UNIT
     //=================================================
     branchPC = isRet ? operand1 : branch_target;
     isBranchTaken = isUBranch || (isBeq && eq) || (isBgt && gt);    //isUBranch||(isBeq&&flags.E)||(isBgt&&flags.GT)
-    //??
-    isCall = isCall || (opcode == 18);
-    isWb = isWb || isCall;
 }
 
 //=================================================
