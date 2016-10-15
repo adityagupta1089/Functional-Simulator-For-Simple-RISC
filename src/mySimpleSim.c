@@ -17,6 +17,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define min_sep printf("\t---------------------------------------------------------------\n");
+#define maj_sep printf("======================================================================\n");
+
 //=================================================
 // REGISTER FILE
 //=================================================
@@ -76,7 +79,15 @@ word immx;
 word branchPC;
 
 void run_simplesim() {
+    int cycle = 0;
+    maj_sep
     while (1) {
+        //=================================================
+        // SUMMARY
+        //=================================================
+        printf("CYCLE %04d \n", cycle++);
+        maj_sep
+        //=================================================
         fetch();
         if (instruction_word == -1) break;
         decode();
@@ -84,17 +95,23 @@ void run_simplesim() {
         mem();
         write_back();
         //=================================================
-        // debugging
+        // SUMMARY
         //=================================================
-        /*printf("PC=%03d: ", PC);
+        printf("Summary:\n");
+        printf("\tPC=%03d: ", PC);
         for (int i = 0; i < 14; i++) {
-            printf("r%d=%d, ", i, R[i]);
+            if (i % 5 == 0) printf("\n\t");
+            printf("r%02d=%04d, ", i, R[i]);
         }
         printf("sp=%04d, ra=%03d.", R[14], R[15]);
-        printf("\n");*/
+        printf("\n");
+        maj_sep
         //=================================================
         PC = isBranchTaken ? branchPC : PC + 4;
     }
+    printf("Exiting and Writing output MEM file.\n");
+    maj_sep
+    write_data_memory();
 }
 
 //=================================================
@@ -161,6 +178,12 @@ void write_data_memory() {
 //=================================================
 void fetch() {
     instruction_word = read_word(MEM, PC);
+    //=================================================
+    // INFORMATION
+    //=================================================
+    printf("Instruction Fetch:\n");
+    printf("\tRead 0x%x (instruction) from %d (PC)\n", instruction_word, PC);
+    min_sep
 }
 
 //=================================================
@@ -183,6 +206,13 @@ void decode() {
     if ((branch_target & 0x10000000) >> 28) branch_target += 0x1E0000000; // if negative extending sign
     branch_target += PC;
     //=================================================
+    // INFORMATION
+    //=================================================
+    printf("Decode:\n");
+    printf("\tImmediate and Branch Target Calculation:\n");
+    printf("\t\tCalculated immediate as %d using u=%u,h=%d\n", immx, u, h);
+    printf("\t\tand branch target as %d\n", branch_target);
+    //=================================================
     // OPERAND CALCULATION
     //=================================================
     word opcode = (instruction_word & 0xF8000000) >> 27;
@@ -190,6 +220,12 @@ void decode() {
     isSt = opcode == 15;
     operand1 = isRet ? R[15] : R[(instruction_word & 0x3C0000) >> 18]; //?ra:rs1
     operand2 = isSt ? R[(instruction_word & 0x3C00000) >> 22] : R[(instruction_word & 0x3C000) >> 14]; //?rd:rs2
+    //=================================================
+    // INFORMATION
+    //=================================================
+    printf("\tOperand Calculation:\n");
+    printf("\t\tCalculated operand(1) = %d, operand(2) = %d\n", operand1, operand2);
+    min_sep
 }
 
 //=================================================
@@ -222,8 +258,18 @@ void execute() {
     isUBranch = (opcode == 18) || (opcode == 19) || (opcode == 20);
     isBgt = opcode == 17;
     isBeq = opcode == 16;
-    isWb = (opcode == 0) || isSub || isMul || isDiv || isMod || isAnd || isOr || isNot || isMov || isLd || isLsl || isLsr || isAsr || isCall;
+    isWb = opcode == 0 || isSub || isMul || isDiv || isMod || isAnd || isOr || isNot || isMov || isLd || isLsl || isLsr || isAsr || isCall;
     isImmediate = ((instruction_word & 0x4000000) >> 26);
+    //=================================================
+    // INFORMATION
+    //=================================================
+    printf("Execute:\n");
+    printf("\tControl Signals:\n");
+    printf("\t\tCalculated opcode as %d and respective signals:\n", opcode);
+    printf("\t\t\tisAdd(%d),isSub(%d),isCmp(%d),isMul(%d),isDiv(%d)\n", isAdd, isSub, isCmp, isMul, isDiv);
+    printf("\t\t\tisMod(%d),isLsl(%d),isLsr(%d),isAsr(%d), isOr(%d)\n", isMod, isLsl, isLsr, isAsr, isOr);
+    printf("\t\t\tisAnd(%d),isNot(%d),isMov(%d),isCall(%d),isLd(%d)\n", isAnd, isNot, isMov, isCall, isLd);
+    printf("\t\t\tisUBranch(%d),isBgt(%d),isBeq(%d),isWb(%d),\n\t\t\tisImmediate(%d)\n", isUBranch, isBgt, isBeq, isWb, isImmediate);
     //=================================================
     // ALU UNIT
     //=================================================
@@ -246,12 +292,23 @@ void execute() {
     else if (isLsl) aluResult = A << B;
     else if (isLsr) aluResult = A >> B;
     else if (isAsr) aluResult = (word) (((signed int) A) >> B);
-
+    //=================================================
+    // INFORMATION
+    //=================================================
+    printf("\tALU Unit:\n");
+    printf("\t\tPerformed required operation on A=%u, B=%u to get\n", A, B);
+    printf("\t\taluResult=%u, gt=%d,eq=%d\n", aluResult, gt, eq);
     //=================================================
     // BRANCH UNIT
     //=================================================
     branchPC = isRet ? operand1 : branch_target;
     isBranchTaken = isUBranch || (isBeq && eq) || (isBgt && gt);    //isUBranch||(isBeq&&flags.E)||(isBgt&&flags.GT)
+    //=================================================
+    // INFORMATION
+    //=================================================
+    printf("\tBranch Unit:\n");
+    printf("\t\tCalculated Branch PC as %u and isBranchTaken(%d)\n", branchPC, isBranchTaken);
+    min_sep
 }
 
 //=================================================
@@ -262,7 +319,14 @@ void execute() {
 void mem() {
     if (isLd) ldResult = read_word(MEM, aluResult);
     else if (isSt) write_word(MEM, aluResult, operand2);
-
+    //=================================================
+    // INFORMATION
+    //=================================================
+    printf("Memory:\n");
+    if (isLd) printf("\tLoaded MEM[%u]=%u\n", aluResult, ldResult);
+    else if (isSt) printf("\tStored MEM[%u]=%u\n", aluResult, operand2);
+    else printf("\tNo load/store to do\n");
+    min_sep
 }
 
 //=================================================
@@ -276,6 +340,13 @@ void write_back() {
         if (isCall) R[15] = result;
         else R[(instruction_word & 0x3C00000) >> 22] = result;
     }
+    //=================================================
+    // INFORMATION
+    //=================================================
+    printf("Write Back:\n");
+    if (!isWb) printf("\tNo Writeback\n");
+    else printf("\tStored %u intro R[%d]\n", result, isCall ? 15 : (instruction_word & 0x3C00000) >> 22);
+    min_sep
 }
 
 //=================================================

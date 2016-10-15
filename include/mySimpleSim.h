@@ -20,7 +20,6 @@
 //=================================================
 typedef uint32_t word;
 typedef int bit; //bit not supported in c++
-typedef int reg_addr;
 typedef int boolean;
 typedef char byte;
 //=================================================
