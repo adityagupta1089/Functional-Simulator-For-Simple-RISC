@@ -8,6 +8,7 @@ Table of contents
 1. Directory Structure
 2. How to build
 3. How to execute
+4. Test results
 
 Directory Structure:
 --------------------
@@ -44,3 +45,5 @@ For cleaning the project:
 How to execute
 --------------
 ./mySimpleSim test/simple_add.mem
+
+
