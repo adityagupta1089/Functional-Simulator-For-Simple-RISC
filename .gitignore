@@ -1,1 +1,2 @@
-./bin/mySimpleSim
+bin/
+src/data_out.mem
