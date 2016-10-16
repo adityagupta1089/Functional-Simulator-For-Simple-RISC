@@ -203,7 +203,7 @@ void decode() {
     if (h) immx <<= 16;
     else if (((instruction_word & 0x8000) >> 8) && !u) immx |= 0xFFFC0000; //if negative sign extension
     branch_target = (instruction_word & 0x7FFFFFF) << 2;
-    if ((branch_target & 0x10000000) >> 28) branch_target += 0x1E0000000; // if negative extending sign
+    if ((branch_target & 0x10000000) >> 28) branch_target += 0xE0000000; // if negative extending sign
     branch_target += PC;
     //=================================================
     // INFORMATION
