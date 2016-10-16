@@ -6,6 +6,8 @@
 // Developer's Name:     Aditya Gupta
 // Developer's Email id: 2015csb1003[at]iitrpr[dot]ac[dot]in
 //
+// Developer's Name:     Vishal Singh
+// Developer's Email id: 2015csb1040[at]iitrpr[dot]ac[dot]in
 //=================================================
 
 //=================================================
