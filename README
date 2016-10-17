@@ -53,6 +53,7 @@ How to execute
 --------------
 ./mySimpleSim test/simple_add.mem
 
+
 Test Results
 --------------
 1. simple_add.mem
@@ -77,5 +78,5 @@ Test Results
 	chained (3 total) functions and switch case.
 	Stores result 29416(d) into r6.
 8. array_add.mem
-	Creates an array of size 10 and initializes A[i]=i and
+	Creates an array of size 100 and initializes A[i]=i and
 	sums them to get 5050 into r2.
