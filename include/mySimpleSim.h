@@ -22,7 +22,6 @@
 //=================================================
 typedef uint32_t word;
 typedef int bit; //bit not supported in c++
-typedef int boolean;
 typedef char byte;
 //=================================================
 // TYPEDEFS
@@ -44,6 +43,8 @@ void execute();
 void mem();
 //writes the results back to register file
 void write_back();
+// TODO
+void update();
 //=================================================
 // MEMORY READ WRITE
 //=================================================
