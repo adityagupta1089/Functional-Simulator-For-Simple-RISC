@@ -120,12 +120,12 @@ Software description
 How to build
 ------------
 For building:
-	$cd src
-	$make
+    $cd src
+    $make
 
 For cleaning the project:
-	$cd src
-	$make clean
+    $cd src
+    $make clean
 
 How to execute
 --------------
@@ -144,74 +144,74 @@ Output
  |        CYCLE ****                                                                    |
  |        ======================================================================        |
  |        Instruction Fetch:                                                            |  
- |	      Read 0x******** (instruction) from * (PC)                                     |
- |	        ---------------------------------------------------------------             |
+ |             Read 0x******** (instruction) from * (PC)                                |
+ |          ---------------------------------------------------------------             |
  |        Decode:                                                                       |
- |	        Immediate and Branch Target Calculation:                                    |
- |		        Calculated immediate as * using u=*,h=*                                 | 
- |		        and branch target as **********                                         |
- |	        Operand Calculation:                                                        | 
- |		        Calculated operand(1) = *, operand(2) = *                               |
- |	        ---------------------------------------------------------------             | 
+ |             Immediate and Branch Target Calculation:                                 |
+ |                Calculated immediate as * using u=*,h=*                               | 
+ |                and branch target as **********                                       |
+ |             Operand Calculation:                                                     | 
+ |                Calculated operand(1) = *, operand(2) = *                             |
+ |             ---------------------------------------------------------------          | 
  |        Execute:                                                                      |
- |	        Control Signals:                                                            |
- |		        Calculated opcode as * and respective signals:                          |
- |			        isAdd(*),isSub(*),isCmp(*),isMul(*),isDiv(*)                        | 
- |			        isMod(*),isLsl(*),isLsr(*),isAsr(*), isOr(*)                        | 
- |			        isAnd(*),isNot(*),isMov(*),isCall(*),isLd(*)                        | 
- |			        isUBranch(*),isBgt(*),isBeq(*),isWb(*),                             |
- |			        isImmediate(*)                                                      |
- |	        ALU Unit:                                                                   |
- |		        Performed required operation on A=*, B=* to get                         |
- |		        aluResult=*, gt=*,eq=*                                                  |
- |	        Branch Unit:                                                                |
- |		        Calculated Branch PC as ********** and isBranchTaken(*)                 | 
- |	        ---------------------------------------------------------------             |
+ |             Control Signals:                                                         |
+ |                Calculated opcode as * and respective signals:                        |
+ |                    isAdd(*),isSub(*),isCmp(*),isMul(*),isDiv(*)                      | 
+ |                    isMod(*),isLsl(*),isLsr(*),isAsr(*), isOr(*)                      | 
+ |                    isAnd(*),isNot(*),isMov(*),isCall(*),isLd(*)                      | 
+ |                    isUBranch(*),isBgt(*),isBeq(*),isWb(*),                           |
+ |                    isImmediate(*)                                                    |
+ |             ALU Unit:                                                                |
+ |                Performed required operation on A=*, B=* to get                       |
+ |                aluResult=*, gt=*,eq=*                                                |
+ |             Branch Unit:                                                             |
+ |                Calculated Branch PC as ********** and isBranchTaken(*)               | 
+ |             ---------------------------------------------------------------          |
  |        Memory:                                                                       |
  |           No load/store to do                                                        | 
  |           ---------------------------------------------------------------            |
  |        Write Back:                                                                   |
- |	        Stored * intro R[*]                                                         |
- |	        ---------------------------------------------------------------             | 
+ |             Stored * intro R[*]                                                      |
+ |             ---------------------------------------------------------------          | 
  |       Summary:                                                                       |
- |        PC=***:                                                                       |
- |	        r00=****, r01=****, r02=****, r03=****, r04=****,                           |
- |	        r05=****, r06=****, r07=****, r08=****, r09=****,                           |
- |	        r10=****, r11=****, r12=****, r13=****, sp=****, ra=****.                   |
- |	                                                                                    |
+ |           PC=***:                                                                    |
+ |             r00=****, r01=****, r02=****, r03=****, r04=****,                        |
+ |             r05=****, r06=****, r07=****, r08=****, r09=****,                        |
+ |             r10=****, r11=****, r12=****, r13=****, sp=****, ra=****.                |
+ |                                                                                      |
  +--------------------------------------------------------------------------------------+
 
 
 Test Results
 --------------
 1. simple_add.mem
-	Calculates 4(r1)+12(r2)=16(r3).
-	
+    Calculates 4(r1)+12(r2)=16(r3).
+    
 2. prime.mem
-	Calculats whether 1729 (r1) is prime or not 1 
-	(r0=isPrime)
-	
+    Calculats whether 1729 (r1) is prime or not 1 
+    (r0=isPrime)
+    
 3. matrix.mem
-	See corresponding '.asm' file for this testcase 
-	involving 
-	matrix operations with ld/st.
-	
+    See corresponding '.asm' file for this testcase 
+    involving 
+    matrix operations with ld/st.
+    
 4. lcm.mem
-	Finds lcm of r1(1963) and r2(1729) into r0(261079).
-	
+    Finds lcm of r1(1963) and r2(1729) into r0(261079).
+    
 5. fibonacci_recursive.mem
-	Calculates n(th) [=15] fibonaaci number, i.e. 377 into 
-	r2
-	f0=1, f1=1
-	
+    Calculates n(th) [=15] fibonaaci number, i.e. 377 into 
+    r2
+    f0=1, f1=1
+    
 6. factorial_recursive.mem
-	Calculates factorial of 12(r0), i.e. 479001600 into r1
-	
+    Calculates factorial of 12(r0), i.e. 479001600 into r1
+    
 7. assignment4.mem
-	See 'ass4.asm' and 'ass4.c' for this testcase invloving 
-	chained (3 total) functions and switch case.
-	Stores result 29416(d) into r6.
-	
+    See 'ass4.asm' and 'ass4.c' for this testcase invloving 
+    chained (3 total) functions and switch case.
+    Stores result 29416(d) into r6.
+    
 8. array_add.mem
-	Creates an array of size 100 and initializes A[i]=i and
-	sums them to get 5050 into r2.
+    Creates an array of size 100 and initializes A[i]=i and
+    sums them to get 5050 into r2.
