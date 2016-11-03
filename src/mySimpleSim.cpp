@@ -172,7 +172,7 @@ void decode() {
     Control control;
     bit I = ((instruction & 0x4000000) >> 26);
     control.update(opcode, I);
-    /*
+    
      //=================================================
      // IMMEDIATE AND BRANCH TARGET CALCULATION
      //=================================================
@@ -187,12 +187,13 @@ void decode() {
      //=================================================
      // OPERAND CALCULATION
      //=================================================
-     word opcode = (instruction & 0xF8000000) >> 27;
-     isRet = opcode == 20;
-     isSt = opcode == 15;
-     operand1 = isRet ? R[15] : R[(instruction & 0x3C0000) >> 18]; //?ra:rs1
-     operand2 = isSt ? R[(instruction & 0x3C00000) >> 22] : R[(instruction & 0x3C000) >> 14]; //?rd:rs2
-     */
+     operand1 = control.isRet ? R[15] : R[(instruction & 0x3C0000) >> 18]; //?ra:rs1
+     operand2 = control.isSt ? R[(instruction & 0x3C00000) >> 22] : R[(instruction & 0x3C000) >> 14]; //?rd:rs2
+     
+     
+     word A = operand1;
+     word B = control.isImmediate ? immx : operand2;
+     of_ex.update(PC,branch_target,B,A,operand2,instruction,control);
 }
 
 //=================================================
@@ -206,8 +207,7 @@ void execute() {
      //=================================================
      // ALU UNIT
      //=================================================
-     word A = operand1;
-     word B = isImmediate ? immx : operand2;
+     
      if (isAdd) aluResult = A + B;
      else if (isSub) aluResult = A - B;
      else if (isMul) aluResult = A * B;
