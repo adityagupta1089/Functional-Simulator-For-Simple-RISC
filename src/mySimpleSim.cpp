@@ -181,7 +181,7 @@ void decode() {
     bit h = (instruction & 0x20000) >> 17;
     if (h) immx <<= 16;
     else if (((instruction & 0x8000) >> 8) && !u) immx |= 0xFFFC0000; //if negative sign extension
-    word branch_target = (instruction & 0x7FFFFFF) << 2;
+    int branch_target = (instruction & 0x7FFFFFF) << 2;
     if ((branch_target & 0x10000000) >> 28) branch_target += 0xE0000000; // if negative extending sign
     branch_target += PC;
     //=================================================
@@ -207,38 +207,41 @@ void execute() {
     int PC = of_ex.getPc();
     word A = of_ex.getA();
     word B = of_ex.getB();
-    word branch_target = of_ex.getBranchTarget();
+    word operand2 = of_ex.getOperand2();
+    int branch_target = of_ex.getBranchTarget();
+    Control control = of_ex.getControl();
 
-    /*
+    
      //=================================================
      // ALU UNIT
      //=================================================
      
-     
+    word aluResult; 
 
-     if (isAdd) aluResult = A + B;
-     else if (isSub) aluResult = A - B;
-     else if (isMul) aluResult = A * B;
-     else if (isDiv) aluResult = A / B;
-     else if (isMod) aluResult = A % B;
-     else if (isCmp) {
+     if (control.isAdd) aluResult = A + B;
+     else if (control.isSub) aluResult = A - B;
+     else if (control.isMul) aluResult = A * B;
+     else if (control.isDiv) aluResult = A / B;
+     else if (control.isMod) aluResult = A % B;
+     else if (control.isCmp) {
      if (A > B) gt = 1;
      else gt = 0;
      if (A == B) eq = 1;
      else eq = 0;
-     } else if (isAnd) aluResult = A & B;
-     else if (isOr) aluResult = A | B;
-     else if (isNot) aluResult = !B;
-     else if (isMov) aluResult = B;
-     else if (isLsl) aluResult = A << B;
-     else if (isLsr) aluResult = A >> B;
-     else if (isAsr) aluResult = (word) (((signed int) A) >> B);
+     } else if (control.isAnd) aluResult = A & B;
+     else if (control.isOr) aluResult = A | B;
+     else if (control.isNot) aluResult = !B;
+     else if (control.isMov) aluResult = B;
+     else if (control.isLsl) aluResult = A << B;
+     else if (control.isLsr) aluResult = A >> B;
+     else if (control.isAsr) aluResult = (word) (((signed int) A) >> B);
      //=================================================
      // BRANCH UNIT
      //=================================================
-     branchPC = isRet ? operand1 : branch_target;
-     isBranchTaken = isUBranch || (isBeq && eq) || (isBgt && gt);    //isUBranch||(isBeq&&flags.E)||(isBgt&&flags.GT)
-     */
+     int branchPC = control.isRet ? A : branch_target;
+     control.isBranchTaken = control.isUBranch || (control.isBeq && eq) || (control.isBgt && gt);    //isUBranch||(isBeq&&flags.E)||(isBgt&&flags.GT)
+     
+     ex_ma.update(PC, branchPC, aluResult, operand2, instruction, control);
 }
 
 //=================================================
