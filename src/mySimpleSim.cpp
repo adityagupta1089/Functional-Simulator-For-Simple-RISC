@@ -202,11 +202,24 @@ void decode() {
 //=================================================
 void execute() {
 
+    if (of_ex.hasBubble()) return;
+    word instruction = of_ex.getInstruction();
+    int PC = of_ex.getPc();
+    word A = of_ex.getA();
+    word B = of_ex.getB();
+    word branch_target = of_ex.getBranchTarget();
+    
+    Control control;
+    bit I = ((instruction & 0x4000000) >> 26);
+    control.update(opcode, I);
+
     /*
      //=================================================
      // ALU UNIT
      //=================================================
      
+     
+
      if (isAdd) aluResult = A + B;
      else if (isSub) aluResult = A - B;
      else if (isMul) aluResult = A * B;
