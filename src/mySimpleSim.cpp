@@ -313,13 +313,13 @@ bool data_lock_conflict(word A, word B) {
 word read_word(byte* mem, word address) {
     word* data;
     data = (word*) (mem + address);
-    return *data;    // basically return MEM[address]
+    return *data; //basically return MEM[address]
 }
 
 //=================================================
 void write_word(byte* mem, word address, word data) {
     word* data_p;
     data_p = (word*) (mem + address);
-    *data_p = data;    //basically MEM[address]=data
+    *data_p = data; //basically MEM[address]=data
 }
 //=================================================
