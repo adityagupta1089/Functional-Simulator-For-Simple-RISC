@@ -165,7 +165,10 @@ void decode() {
     //=================================================
     // CONTROL SIGNALS
     //=================================================
-    if (if_of.hasBubble()) return;
+    if (if_of.hasBubble()) {
+        of_ex.push_bubble();
+        return;
+    }
     word instruction = if_of.getInstruction();
     int PC = if_of.getPc();
     word opcode = (instruction & 0xF8000000) >> 27;
@@ -270,15 +273,18 @@ void write_back() {
 //=================================================
 
 void update() {
-    if (data_lock_conflict(if_of.getInstruction(), of_ex.getInstruction())
-            || data_lock_conflict(if_of.getInstruction(), ex_ma.getInstruction())
-            || data_lock_conflict(if_of.getInstruction(), ma_rw.getInstruction())) {
-        of_ex.push_bubble();
-    }
+    if (data_lock_conflict(if_of.getInstruction(), of_ex.getInstruction()) || data_lock_conflict(if_of.getInstruction(), ex_ma.getInstruction()) || data_lock_conflict(if_of.getInstruction(), ma_rw.getInstruction())) of_ex.push_bubble();
 }
 
-
-bool data_lock_conflict(word A, word B){
+bool data_lock_conflict(word A, word B) {
+    int opcodeA = (A & 0xF8000000) >> 27;
+    int opcodeB = (B & 0xF8000000) >> 27;
+    if (opcodeA == OPCODE_NOP || opcodeA == OPCODE_B || opcodeA == OPCODE_BEQ || opcodeA == OPCODE_BGT || opcodeA == OPCODE_CALL) return false;
+    if (opcodeB == OPCODE_NOP || opcodeB == OPCODE_CMP || opcodeB == OPCODE_ST || opcodeB == OPCODE_B || opcodeB == OPCODE_BEQ || opcodeB == OPCODE_BGT || opcodeB == OPCODE_RET) return false;
+    int src1 = (opcodeA == OPCODE_RET) ? 15 : (A & 0x3C0000) >> 18;
+    int src2 = (opcodeA == OPCODE_ST) ? (A & 0x3C00000) >> 22 : (A & 0x3C0000) >> 18;
+    int dest = (opcodeB == OPCODE_CALL) ? 15 : (A & 0x3C00000) >> 22;
+    return src1 == dest || (!(opcodeA != OPCODE_ST && ((A & 0x4000000) >> 26)) && src2 == dest);
     return false;
 }
 //=================================================
