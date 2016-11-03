@@ -23,7 +23,7 @@ struct Control {
             isBgt = opcode == 17;
             isBeq = opcode == 16;
             isWb = opcode == 0 || isSub || isMul || isDiv || isMod || isAnd || isOr || isNot || isMov || isLd || isLsl || isLsr || isAsr || isCall;
-
+            isimmediate = I;
         }
 };
 
@@ -71,6 +71,15 @@ class OF_EX {
         void tick() {
             output = input;
         }
+        void update(int pc, word b_target, word a, word b, word op2, word inst, Control ctrl) {
+            input.PC = pc;
+            input.branch_target = b_target;
+            input.A = a;
+            input.B = b;
+            input.operand2 = op2
+            input.instruction = inst;
+            input.control = ctrl;
+        }    
 };
 
 class EX_MA {
