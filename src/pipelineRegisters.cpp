@@ -147,6 +147,7 @@ class OF_EX {
 class EX_MA {
         struct data {
                 int PC;
+                int branchPC;
                 word aluResult;
                 word operand2;
                 word instruction;
@@ -160,8 +161,15 @@ class EX_MA {
         void tick() {
             output = input;
         }
-        void update() {
+        void update(int pc, int b_PC, word alu, word op2, word inst, Control ctrl) {
+            input.PC = pc;
+            input.branchPC = b_PC;
+            input.aluResult = alu;
+            input.operand2 = op2;
+            input.instruction = inst;
+            input.control = ctrl;
         }
+        
         word getAluResult() const {
             return output.aluResult;
         }
