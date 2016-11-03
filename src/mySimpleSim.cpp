@@ -253,10 +253,21 @@ void execute() {
 //perform the memory operation
 //=================================================
 void mem() {
-    /*
-     if (isLd) ldResult = read_word(MEM, aluResult);
-     else if (isSt) write_word(MEM, aluResult, operand2);
-     */
+
+    if (ex_ma.hasBubble()) return;
+    word instruction = ex_ma.getInstruction();
+    int PC = ex_ma.getPc();
+    word operand2 = ex_ma.getOperand2();
+    word aluResult = ex_ma.getAluResult();
+    int branch_PC = ex_ma.getbranchPC();
+    Control control = ex_ma.getControl();
+
+     word ldResult;
+     if (control.isLd) ldResult = read_word(MEM, aluResult);
+     else if (control.isSt) write_word(MEM, aluResult, operand2);
+    
+     ma_rw.update(PC, branch_PC, ldResult, aluResult, instruction, control); 
+    
 }
 
 //=================================================
@@ -265,13 +276,21 @@ void mem() {
 //writes the results back to register file
 //=================================================
 void write_back() {
-    /*
-     word result = isLd ? ldResult : isCall ? PC + 4 : aluResult;
-     if (isWb) {
-     if (isCall) R[15] = result;
+
+    if (ma_rw.hasBubble()) return;
+    word instruction = ma_rw.getInstruction();
+    int PC = ma_rw.getPc();
+    word ldResult = ma_rw.getLdResult();
+    word aluResult = ma_rw.getAluResult();
+    int branch_PC = ma_rw.getbranchPC();
+    Control control = ma_rw.getControl();
+    
+     word result = control.isLd ? ldResult : control.isCall ? PC + 4 : aluResult;
+     if (control.isWb) {
+     if (control.isCall) R[15] = result;
      else R[(instruction & 0x3C00000) >> 22] = result;
      }
-     */
+    
 }
 //=================================================
 

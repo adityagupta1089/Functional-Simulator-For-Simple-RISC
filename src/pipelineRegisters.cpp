@@ -173,6 +173,10 @@ class EX_MA {
         word getAluResult() const {
             return output.aluResult;
         }
+        
+        word getbranchPC() const {
+            return output.branchPC;
+        }
 
         const Control& getControl() const {
             return output.control;
@@ -199,6 +203,7 @@ class EX_MA {
 class MA_RW {
         struct data {
                 int PC;
+                int branchPC;
                 word aluResult;
                 word ldResult;
                 word instruction;
@@ -213,7 +218,13 @@ class MA_RW {
             output = input;
         }
 
-        void update() {
+        void update(int pc, int b_PC, word ld_rslt, word alu, word inst, Control ctrl) {
+            input.PC = pc;
+            input.branchPC = b_PC;
+            input.aluResult = alu;
+            input.ldResult = ld_rslt;
+            input.instruction = inst;
+            input.control = ctrl;
         }
 
         word getAluResult() const {
@@ -234,6 +245,10 @@ class MA_RW {
 
         int getPc() const {
             return output.PC;
+        }
+        
+        word getbranchPC() const {
+            return output.branchPC;
         }
 
         bool hasBubble() const {
