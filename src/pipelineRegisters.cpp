@@ -35,6 +35,7 @@ class IF_OF {
         data input;
         data output;
         bool bubble;
+        
     public:
         void tick() {
             output = input;
@@ -111,6 +112,11 @@ class OF_EX {
         int getPc() const {
             return output.PC;
         }
+        
+        bool hasBubble() const {
+            return bubble;
+        }
+
 
         void push_bubble() {
             bubble = true;
@@ -127,6 +133,7 @@ class EX_MA {
         };
         data input;
         data output;
+        bool bubble;
 
     public:
         void tick() {
@@ -153,6 +160,11 @@ class EX_MA {
         int getPc() const {
             return output.PC;
         }
+        
+        bool hasBubble() const {
+            return bubble;
+        }
+
 
 };
 
@@ -166,6 +178,7 @@ class MA_RW {
         };
         data input;
         data output;
+        bool bubble;
 
     public:
         void tick() {
@@ -194,5 +207,10 @@ class MA_RW {
         int getPc() const {
             return output.PC;
         }
+        
+        bool hasBubble() const {
+            return bubble;
+        }
+
 };
 
