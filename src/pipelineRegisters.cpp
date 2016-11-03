@@ -69,6 +69,7 @@ class OF_EX {
         };
         data input;
         data output;
+        bool bubble;
     public:
         void tick() {
             output = input;
@@ -111,6 +112,9 @@ class OF_EX {
             return output.PC;
         }
 
+        void push_bubble() {
+            bubble = true;
+        }
 };
 
 class EX_MA {

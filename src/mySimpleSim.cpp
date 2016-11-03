@@ -259,8 +259,18 @@ void write_back() {
      */
 }
 //=================================================
-void update() {
 
+void update() {
+    if (data_lock_conflict(if_of.getInstruction(), of_ex.getInstruction())
+            || data_lock_conflict(if_of.getInstruction(), ex_ma.getInstruction())
+            || data_lock_conflict(if_of.getInstruction(), ma_rw.getInstruction())) {
+        of_ex.push_bubble();
+    }
+}
+
+
+bool data_lock_conflict(word A, word B){
+    return false;
 }
 //=================================================
 word read_word(byte* mem, word address) {

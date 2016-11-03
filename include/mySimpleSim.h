@@ -45,6 +45,8 @@ void mem();
 void write_back();
 // TODO
 void update();
+
+bool data_lock_conflict(word A, word B);
 //=================================================
 // MEMORY READ WRITE
 //=================================================
