@@ -172,28 +172,27 @@ void decode() {
     Control control;
     bit I = ((instruction & 0x4000000) >> 26);
     control.update(opcode, I);
-    
-     //=================================================
-     // IMMEDIATE AND BRANCH TARGET CALCULATION
-     //=================================================
-     immx = instruction & 0xFFFF;
-     bit u = (instruction & 0x10000) >> 16;
-     bit h = (instruction & 0x20000) >> 17;
-     if (h) immx <<= 16;
-     else if (((instruction & 0x8000) >> 8) && !u) immx |= 0xFFFC0000; //if negative sign extension
-     branch_target = (instruction & 0x7FFFFFF) << 2;
-     if ((branch_target & 0x10000000) >> 28) branch_target += 0xE0000000; // if negative extending sign
-     branch_target += PC;
-     //=================================================
-     // OPERAND CALCULATION
-     //=================================================
-     operand1 = control.isRet ? R[15] : R[(instruction & 0x3C0000) >> 18]; //?ra:rs1
-     operand2 = control.isSt ? R[(instruction & 0x3C00000) >> 22] : R[(instruction & 0x3C000) >> 14]; //?rd:rs2
-     
-     
-     word A = operand1;
-     word B = control.isImmediate ? immx : operand2;
-     of_ex.update(PC,branch_target,B,A,operand2,instruction,control);
+
+    //=================================================
+    // IMMEDIATE AND BRANCH TARGET CALCULATION
+    //=================================================
+    word immx = instruction & 0xFFFF;
+    bit u = (instruction & 0x10000) >> 16;
+    bit h = (instruction & 0x20000) >> 17;
+    if (h) immx <<= 16;
+    else if (((instruction & 0x8000) >> 8) && !u) immx |= 0xFFFC0000; //if negative sign extension
+    word branch_target = (instruction & 0x7FFFFFF) << 2;
+    if ((branch_target & 0x10000000) >> 28) branch_target += 0xE0000000; // if negative extending sign
+    branch_target += PC;
+    //=================================================
+    // OPERAND CALCULATION
+    //=================================================
+    word operand1 = control.isRet ? R[15] : R[(instruction & 0x3C0000) >> 18]; //?ra:rs1
+    word operand2 = control.isSt ? R[(instruction & 0x3C00000) >> 22] : R[(instruction & 0x3C000) >> 14]; //?rd:rs2
+
+    word A = operand1;
+    word B = control.isImmediate ? immx : operand2;
+    of_ex.update(PC, branch_target, B, A, operand2, instruction, control);
 }
 
 //=================================================

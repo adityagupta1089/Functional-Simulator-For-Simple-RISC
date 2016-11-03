@@ -23,7 +23,7 @@ struct Control {
             isBgt = opcode == 17;
             isBeq = opcode == 16;
             isWb = opcode == 0 || isSub || isMul || isDiv || isMod || isAnd || isOr || isNot || isMov || isLd || isLsl || isLsr || isAsr || isCall;
-            isimmediate = I;
+            isImmediate = I;
         }
 };
 
@@ -65,9 +65,11 @@ class OF_EX {
                 word operand2;
                 word instruction;
                 Control control;
+
         };
         data input;
         data output;
+    public:
         void tick() {
             output = input;
         }
@@ -76,10 +78,39 @@ class OF_EX {
             input.branch_target = b_target;
             input.A = a;
             input.B = b;
-            input.operand2 = op2
+            input.operand2 = op2;
             input.instruction = inst;
             input.control = ctrl;
-        }    
+        }
+
+        word getA() const {
+            return output.A;
+        }
+
+        word getB() const {
+            return output.B;
+        }
+
+        int getBranchTarget() const {
+            return output.branch_target;
+        }
+
+        const Control& getControl() const {
+            return output.control;
+        }
+
+        word getInstruction() const {
+            return output.instruction;
+        }
+
+        word getOperand2() const {
+            return output.operand2;
+        }
+
+        int getPc() const {
+            return output.PC;
+        }
+
 };
 
 class EX_MA {
@@ -92,9 +123,33 @@ class EX_MA {
         };
         data input;
         data output;
+
+    public:
         void tick() {
             output = input;
         }
+        void update() {
+        }
+        word getAluResult() const {
+            return output.aluResult;
+        }
+
+        const Control& getControl() const {
+            return output.control;
+        }
+
+        word getInstruction() const {
+            return output.instruction;
+        }
+
+        word getOperand2() const {
+            return output.operand2;
+        }
+
+        int getPc() const {
+            return output.PC;
+        }
+
 };
 
 class MA_RW {
@@ -107,8 +162,33 @@ class MA_RW {
         };
         data input;
         data output;
+
+    public:
         void tick() {
             output = input;
+        }
+
+        void update() {
+        }
+
+        word getAluResult() const {
+            return output.aluResult;
+        }
+
+        const Control& getControl() const {
+            return output.control;
+        }
+
+        word getInstruction() const {
+            return output.instruction;
+        }
+
+        word getLdResult() const {
+            return output.ldResult;
+        }
+
+        int getPc() const {
+            return output.PC;
         }
 };
 
