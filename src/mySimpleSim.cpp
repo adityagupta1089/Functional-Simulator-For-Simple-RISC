@@ -50,18 +50,13 @@ bool isBranchTaken;
 void run_simplesim() {
     header();
     int cycle = 1;
-    bool exit = false;
+    bool not_exit = false;
     while (1) {
         printf("|  %3d ", cycle++);
-        //assume all these on same line
-        fetch();
-        decode();
-        execute();
-        mem();
-        write_back();
-        exit = update(); //negative edge of clock
+        not_exit = fetch() + decode() + execute() + mem() + write_back();
+        update(); //negative edge of clock
         info();
-        if (exit) break;
+        if (!not_exit || cycle > 1000) break; //TODO safety (<1000)
     }
     write_data_memory();
     exit_info();
@@ -148,16 +143,17 @@ void header() {
 // reads from the instruction memory and updates
 // the instruction register
 //=================================================
-void fetch() {
+bool fetch() {
     word instruction = read_word(MEM, PC);
     if (instruction == -1) {
         printf("| ---- ");
         if_of.push_bubble();
-        return;
+        return false;
     }
     if_of.update(PC, instruction);
 
     printf("| I%-3d ", PC / 4);
+    return true;
 }
 
 //=================================================
@@ -167,14 +163,14 @@ void fetch() {
 // operand2 from register file, decides the
 // operation to be performed in execute stage
 //=================================================
-void decode() {
+bool decode() {
     //=================================================
     // CONTROL SIGNALS
     //=================================================
     if (if_of.hasBubble()) {
         printf("| ---- ");
         of_ex.push_bubble();
-        return;
+        return false;
     }
     word instruction = if_of.getInstruction();
     int PC = if_of.getPc();
@@ -198,13 +194,16 @@ void decode() {
     // OPERAND CALCULATION
     //=================================================
     word operand1 = control.isRet ? R[15] : R[(instruction & 0x3C0000) >> 18]; //?ra:rs1
-    word operand2 = control.isSt ? R[(instruction & 0x3C00000) >> 22] : R[(instruction & 0x3C000) >> 14]; //?rd:rs2
+    word operand2 =
+            control.isSt ?
+                    R[(instruction & 0x3C00000) >> 22] : R[(instruction & 0x3C000) >> 14]; //?rd:rs2
 
     word A = operand1;
     word B = control.isImmediate ? immx : operand2;
-    of_ex.update(PC, branch_target, B, A, operand2, instruction, control);
+    of_ex.update(PC, branch_target, A, B, operand2, instruction, control);
 
     printf("| I%-3d ", PC / 4);
+    return true;
 }
 
 //=================================================
@@ -212,11 +211,11 @@ void decode() {
 //
 //executes the ALU operation based on ALUop
 //=================================================
-void execute() {
+bool execute() {
     if (of_ex.hasBubble()) {
         printf("| ---- ");
         ex_ma.push_bubble();
-        return;
+        return false;
     }
     word instruction = of_ex.getInstruction();
     int PC = of_ex.getPc();
@@ -252,12 +251,14 @@ void execute() {
     //=================================================
     // BRANCH UNIT
     //=================================================
-    branchPC = control.isRet ? A : branch_target;
-    control.isBranchTaken = control.isUBranch || (control.isBeq && eq) || (control.isBgt && gt);    //isUBranch||(isBeq&&flags.E)||(isBgt&&flags.GT)
+    word branchPC = control.isRet ? A : branch_target;
+    control.isBranchTaken = control.isUBranch || (control.isBeq && eq)
+            || (control.isBgt && gt); //isUBranch||(isBeq&&flags.E)||(isBgt&&flags.GT)
     isBranchTaken = control.isBranchTaken;
     ex_ma.update(PC, branchPC, aluResult, operand2, instruction, control);
 
     printf("| I%-3d ", PC / 4);
+    return true;
 }
 
 //=================================================
@@ -265,11 +266,11 @@ void execute() {
 //
 //perform the memory operation
 //=================================================
-void mem() {
+bool mem() {
     if (ex_ma.hasBubble()) {
         printf("| ---- ");
         ma_rw.push_bubble();
-        return;
+        return false;
     }
     word instruction = ex_ma.getInstruction();
     int PC = ex_ma.getPc();
@@ -285,7 +286,7 @@ void mem() {
     ma_rw.update(PC, branch_PC, ldResult, aluResult, instruction, control);
 
     printf("| I%-3d ", PC / 4);
-
+    return true;
 }
 
 //=================================================
@@ -293,10 +294,10 @@ void mem() {
 //
 //writes the results back to register file
 //=================================================
-void write_back() {
+bool write_back() {
     if (ma_rw.hasBubble()) {
         printf("| ---- ");
-        return;
+        return false;
     }
     word instruction = ma_rw.getInstruction();
     int PC = ma_rw.getPc();
@@ -312,39 +313,54 @@ void write_back() {
     }
 
     printf("| I%-3d ", PC / 4);
+    return true;
 
 }
 //=================================================
 
-bool update() {
-    if (data_lock_conflict(if_of.getInstruction(), of_ex.getInstruction()) || data_lock_conflict(if_of.getInstruction(), ex_ma.getInstruction()) || data_lock_conflict(if_of.getInstruction(), ma_rw.getInstruction())) of_ex.push_bubble();
-    if (branch_lock_condition(ex_ma.getInstruction())) {
+void update() {
+    bool data_conflict = !if_of.hasBubble()
+            && ((!of_ex.hasBubble()
+                    && data_lock_conflict(if_of.getInstruction(), of_ex.getInstruction()))
+                    || (!ex_ma.hasBubble()
+                            && data_lock_conflict(if_of.getInstruction(),
+                                    ex_ma.getInstruction()))
+                    || (!ma_rw.hasBubble()
+                            && data_lock_conflict(if_of.getInstruction(),
+                                    ma_rw.getInstruction())));
+    bool branch_conflict = !ex_ma.hasBubble()
+            && branch_lock_condition(ex_ma.getInstruction());
+    if (data_conflict) of_ex.push_bubble();
+    if (branch_conflict) {
         if_of.push_bubble();
         of_ex.push_bubble();
     }
-    PC = isBranchTaken ? branchPC : PC + 4;
-    if_of.tick();
+    if (!data_conflict && !branch_conflict) PC = isBranchTaken ? branchPC : PC + 4;
+    if (!data_conflict) if_of.tick();
     of_ex.tick();
     ex_ma.tick();
     ma_rw.tick();
-    return if_of.hasBubble() && of_ex.hasBubble() && ex_ma.hasBubble() && ma_rw.hasBubble();
 }
 
 bool data_lock_conflict(word A, word B) {
-    if (A == -1 || B == -1) return false;
     int opcodeA = (A & 0xF8000000) >> 27;
     int opcodeB = (B & 0xF8000000) >> 27;
-    if (opcodeA == OPCODE_NOP || opcodeA == OPCODE_B || opcodeA == OPCODE_BEQ || opcodeA == OPCODE_BGT || opcodeA == OPCODE_CALL) return false;
-    if (opcodeB == OPCODE_NOP || opcodeB == OPCODE_CMP || opcodeB == OPCODE_ST || opcodeB == OPCODE_B || opcodeB == OPCODE_BEQ || opcodeB == OPCODE_BGT || opcodeB == OPCODE_RET) return false;
-    int src1 = (opcodeA == OPCODE_RET) ? 15 : (A & 0x3C0000) >> 18;
-    int src2 = (opcodeA == OPCODE_ST) ? (A & 0x3C00000) >> 22 : (A & 0x3C0000) >> 18;
+    if (opcodeA == OPCODE_NOP || opcodeA == OPCODE_B || opcodeA == OPCODE_BEQ
+            || opcodeA == OPCODE_BGT || opcodeA == OPCODE_CALL) return false;
+    if (opcodeB == OPCODE_NOP || opcodeB == OPCODE_CMP || opcodeB == OPCODE_ST
+            || opcodeB == OPCODE_B || opcodeB == OPCODE_BEQ || opcodeB == OPCODE_BGT
+            || opcodeB == OPCODE_RET) return false;
+    int src1 = (opcodeA == OPCODE_RET) ? 15 : (A & 0x3C0000) >> 18;    //?ra:rs1
+    int src2 = (opcodeA == OPCODE_ST) ? (A & 0x3C00000) >> 22 : (A & 0x3C000) >> 14; //?rd:rs2
     int dest = (opcodeB == OPCODE_CALL) ? 15 : (B & 0x3C00000) >> 22;
-    return src1 == dest || (!(opcodeA != OPCODE_ST && ((A & 0x4000000) >> 26)) && src2 == dest);
+    return src1 == dest
+            || (!(opcodeA != OPCODE_ST && ((A & 0x4000000) >> 26)) && src2 == dest);
 }
 
 bool branch_lock_condition(word A) {
     int opcodeA = (A & 0xF8000000) >> 27;
-    bool isUBranch = (opcodeA == OPCODE_B) || (opcodeA == OPCODE_CALL) || (opcodeA == OPCODE_RET);
+    bool isUBranch = (opcodeA == OPCODE_B) || (opcodeA == OPCODE_CALL)
+            || (opcodeA == OPCODE_RET);
     bool isBgt = opcodeA == OPCODE_BGT;
     bool isBeq = opcodeA == OPCODE_BEQ;
     return isUBranch || (isBeq && eq) || (isBgt && gt);

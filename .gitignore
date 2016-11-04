@@ -1,6 +1,7 @@
 bin/
 .settings/
 src/data_out.mem
+data_out.mem
 .checkstyle
 .cproject
 .project

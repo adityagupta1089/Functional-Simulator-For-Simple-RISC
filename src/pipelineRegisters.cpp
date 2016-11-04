@@ -46,6 +46,8 @@ struct Control {
             isBeq = opcode == OPCODE_BEQ;
             isWb = opcode == OPCODE_ADD || isSub || isMul || isDiv || isMod || isAnd || isOr || isNot || isMov || isLd || isLsl || isLsr || isAsr || isCall;
             isImmediate = I;
+            isSt = opcode == OPCODE_ST;
+            isRet = opcode == OPCODE_RET;
         }
 };
 
@@ -63,7 +65,6 @@ class IF_OF {
         IF_OF() {
             bubble_out = true;
             bubble_in = true;
-            output.instruction = -1;
         }
         void tick() {
             if (!bubble_in) output = input;
@@ -111,7 +112,6 @@ class OF_EX {
         OF_EX() {
             bubble_out = true;
             bubble_in = true;
-            output.instruction = -1;
         }
         void tick() {
             if (!bubble_in) output = input;
@@ -183,7 +183,6 @@ class EX_MA {
         EX_MA() {
             bubble_out = true;
             bubble_in = true;
-            output.instruction = -1;
         }
         void tick() {
             if (!bubble_in) output = input;
@@ -250,7 +249,6 @@ class MA_RW {
         MA_RW() {
             bubble_out = true;
             bubble_in = true;
-            output.instruction = -1;
         }
         void tick() {
             if (!bubble_in) output = input;
