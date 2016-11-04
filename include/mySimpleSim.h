@@ -47,6 +47,7 @@ void write_back();
 void update();
 
 bool data_lock_conflict(word A, word B);
+bool branch_lock_condition(word A);
 //=================================================
 // MEMORY READ WRITE
 //=================================================

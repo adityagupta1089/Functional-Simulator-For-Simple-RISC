@@ -20,6 +20,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define min_sep printf("\t---------------------------------------------------------------\n");
+#define maj_sep printf("======================================================================\n");
+
 //=================================================
 // REGISTER FILE
 //=================================================
@@ -36,10 +39,16 @@ static byte MEM[4000];
 // PIPELINE REGISTERS
 //=================================================
 static int PC;
+
 IF_OF if_of;
 OF_EX of_ex;
 EX_MA ex_ma;
 MA_RW ma_rw;
+//=================================================
+// EX -> OF
+//=================================================
+word branchPC;
+bool isBranchTaken;
 
 void run_simplesim() {
     while (1) {
@@ -52,39 +61,8 @@ void run_simplesim() {
         update(); //negative edge of clock
     }
     /*
-     int cycle = 0;
-     maj_sep
-     while (1) {
-     //=================================================
-     // SUMMARY
-     //=================================================
-     printf("CYCLE %04d \n", cycle++);
-     maj_sep
-     //=================================================
-     fetch();
-     if (instruction == -1) break;
-     decode();
-     execute();
-     mem();
-     write_back();
-     //=================================================
-     // SUMMARY
-     //=================================================
-     printf("Summary:\n");
-     printf("\tPC=%03d: ", PC);
-     for (int i = 0; i < 14; i++) {
-     if (i % 5 == 0) printf("\n\t");
-     printf("r%02d=%04d, ", i, R[i]);
-     }
-     printf("sp=%04d, ra=%03d.", R[14], R[15]);
-     printf("\n");
-     maj_sep
-     //=================================================
-     PC = isBranchTaken ? branchPC : PC + 4;
-     }
-     printf("Exiting and Writing output MEM file.\n");
-     maj_sep
-     write_data_memory();*/
+
+     */
 }
 
 //=================================================
@@ -94,6 +72,10 @@ void run_simplesim() {
 // reset all registers and memory content to 0
 //=================================================
 void reset_proc() {
+    if_of.push_bubble();
+    of_ex.push_bubble();
+    ex_ma.push_bubble();
+    ma_rw.push_bubble();
     for (int i = 0; i < 14; i++)
         R[i] = 0;
     R[14] = 4000 - 8;
@@ -152,6 +134,11 @@ void write_data_memory() {
 void fetch() {
     word instruction = read_word(MEM, PC);
     if_of.update(PC, instruction);
+    //=================================================
+    // INFORMATION
+    //=================================================
+    printf("\tRead 0x%X (instruction) from %d (PC)\n", instruction, PC);
+    min_sep
 }
 
 //=================================================
@@ -166,6 +153,7 @@ void decode() {
     // CONTROL SIGNALS
     //=================================================
     if (if_of.hasBubble()) {
+        printf("Decode: bubble\n");
         of_ex.push_bubble();
         return;
     }
@@ -196,6 +184,16 @@ void decode() {
     word A = operand1;
     word B = control.isImmediate ? immx : operand2;
     of_ex.update(PC, branch_target, B, A, operand2, instruction, control);
+    //=================================================
+    // INFORMATION
+    //=================================================
+    printf("Decode:\n");
+    printf("\tImmediate and Branch Target Calculation:\n");
+    printf("\t\tCalculated immediate as %d using u=%u,h=%d\n", immx, u, h);
+    printf("\t\tand branch target as %d\n", branch_target);
+    printf("\tOperand Calculation:\n");
+    printf("\t\tCalculated operand(1) = %d, operand(2) = %d\n", operand1, operand2);
+    min_sep
 }
 
 //=================================================
@@ -204,8 +202,11 @@ void decode() {
 //executes the ALU operation based on ALUop
 //=================================================
 void execute() {
-
-    if (of_ex.hasBubble()) return;
+    if (of_ex.hasBubble()) {
+        printf("Execute: bubble\n");
+        ex_ma.push_bubble();
+        return;
+    }
     word instruction = of_ex.getInstruction();
     int PC = of_ex.getPc();
     word A = of_ex.getA();
@@ -214,37 +215,45 @@ void execute() {
     int branch_target = of_ex.getBranchTarget();
     Control control = of_ex.getControl();
 
-    
-     //=================================================
-     // ALU UNIT
-     //=================================================
-     
-    word aluResult; 
+    //=================================================
+    // ALU UNIT
+    //=================================================
 
-     if (control.isAdd) aluResult = A + B;
-     else if (control.isSub) aluResult = A - B;
-     else if (control.isMul) aluResult = A * B;
-     else if (control.isDiv) aluResult = A / B;
-     else if (control.isMod) aluResult = A % B;
-     else if (control.isCmp) {
-     if (A > B) gt = 1;
-     else gt = 0;
-     if (A == B) eq = 1;
-     else eq = 0;
-     } else if (control.isAnd) aluResult = A & B;
-     else if (control.isOr) aluResult = A | B;
-     else if (control.isNot) aluResult = !B;
-     else if (control.isMov) aluResult = B;
-     else if (control.isLsl) aluResult = A << B;
-     else if (control.isLsr) aluResult = A >> B;
-     else if (control.isAsr) aluResult = (word) (((signed int) A) >> B);
-     //=================================================
-     // BRANCH UNIT
-     //=================================================
-     int branchPC = control.isRet ? A : branch_target;
-     control.isBranchTaken = control.isUBranch || (control.isBeq && eq) || (control.isBgt && gt);    //isUBranch||(isBeq&&flags.E)||(isBgt&&flags.GT)
-     
-     ex_ma.update(PC, branchPC, aluResult, operand2, instruction, control);
+    word aluResult;
+
+    if (control.isAdd) aluResult = A + B;
+    else if (control.isSub) aluResult = A - B;
+    else if (control.isMul) aluResult = A * B;
+    else if (control.isDiv) aluResult = A / B;
+    else if (control.isMod) aluResult = A % B;
+    else if (control.isCmp) {
+        if (A > B) gt = 1;
+        else gt = 0;
+        if (A == B) eq = 1;
+        else eq = 0;
+    } else if (control.isAnd) aluResult = A & B;
+    else if (control.isOr) aluResult = A | B;
+    else if (control.isNot) aluResult = !B;
+    else if (control.isMov) aluResult = B;
+    else if (control.isLsl) aluResult = A << B;
+    else if (control.isLsr) aluResult = A >> B;
+    else if (control.isAsr) aluResult = (word) (((signed int) A) >> B);
+    //=================================================
+    // BRANCH UNIT
+    //=================================================
+    branchPC = control.isRet ? A : branch_target;
+    control.isBranchTaken = control.isUBranch || (control.isBeq && eq) || (control.isBgt && gt);    //isUBranch||(isBeq&&flags.E)||(isBgt&&flags.GT)
+    isBranchTaken = control.isBranchTaken;
+    ex_ma.update(PC, branchPC, aluResult, operand2, instruction, control);
+    //=================================================
+    // INFORMATION
+    //=================================================
+    printf("\tALU Unit:\n");
+    printf("\t\tPerformed required operation on A=%u, B=%u to get\n", A, B);
+    printf("\t\taluResult=%u, gt=%d,eq=%d\n", aluResult, gt, eq);
+    printf("\tBranch Unit:\n");
+    printf("\t\tCalculated Branch PC as %u and isBranchTaken(%d)\n", branchPC, isBranchTaken);
+    min_sep
 }
 
 //=================================================
@@ -253,8 +262,11 @@ void execute() {
 //perform the memory operation
 //=================================================
 void mem() {
-
-    if (ex_ma.hasBubble()) return;
+    if (ex_ma.hasBubble()) {
+        printf("MEM: bubble\n");
+        ma_rw.push_bubble();
+        return;
+    }
     word instruction = ex_ma.getInstruction();
     int PC = ex_ma.getPc();
     word operand2 = ex_ma.getOperand2();
@@ -262,12 +274,21 @@ void mem() {
     int branch_PC = ex_ma.getbranchPC();
     Control control = ex_ma.getControl();
 
-     word ldResult;
-     if (control.isLd) ldResult = read_word(MEM, aluResult);
-     else if (control.isSt) write_word(MEM, aluResult, operand2);
-    
-     ma_rw.update(PC, branch_PC, ldResult, aluResult, instruction, control); 
-    
+    word ldResult;
+    if (control.isLd) ldResult = read_word(MEM, aluResult);
+    else if (control.isSt) write_word(MEM, aluResult, operand2);
+
+    ma_rw.update(PC, branch_PC, ldResult, aluResult, instruction, control);
+
+    //=================================================
+    // INFORMATION
+    //=================================================
+    printf("Memory:\n");
+    if (control.isLd) printf("\tLoaded MEM[%u]=%u\n", aluResult, ldResult);
+    else if (control.isSt) printf("\tStored MEM[%u]=%u\n", aluResult, operand2);
+    else printf("\tNo load/store to do\n");
+    min_sep
+
 }
 
 //=================================================
@@ -276,26 +297,57 @@ void mem() {
 //writes the results back to register file
 //=================================================
 void write_back() {
-
-    if (ma_rw.hasBubble()) return;
+    if (ma_rw.hasBubble()) {
+        printf("RW: bubble\n");
+        return;
+    }
     word instruction = ma_rw.getInstruction();
     int PC = ma_rw.getPc();
     word ldResult = ma_rw.getLdResult();
     word aluResult = ma_rw.getAluResult();
     int branch_PC = ma_rw.getbranchPC();
     Control control = ma_rw.getControl();
-    
-     word result = control.isLd ? ldResult : control.isCall ? PC + 4 : aluResult;
-     if (control.isWb) {
-     if (control.isCall) R[15] = result;
-     else R[(instruction & 0x3C00000) >> 22] = result;
-     }
-    
+
+    word result = control.isLd ? ldResult : control.isCall ? PC + 4 : aluResult;
+    if (control.isWb) {
+        if (control.isCall) R[15] = result;
+        else R[(instruction & 0x3C00000) >> 22] = result;
+    }
+
+    //=================================================
+    // INFORMATION
+    //=================================================
+    printf("Write Back:\n");
+    if (!control.isWb) printf("\tNo Writeback\n");
+    else printf("\tStored %u intro R[%d]\n", result, control.isCall ? 15 : (instruction & 0x3C00000) >> 22);
+    min_sep
+
 }
 //=================================================
 
 void update() {
     if (data_lock_conflict(if_of.getInstruction(), of_ex.getInstruction()) || data_lock_conflict(if_of.getInstruction(), ex_ma.getInstruction()) || data_lock_conflict(if_of.getInstruction(), ma_rw.getInstruction())) of_ex.push_bubble();
+    if (branch_lock_condition(ex_ma.getInstruction())) {
+        if_of.push_bubble();
+        of_ex.push_bubble();
+    }
+    PC = isBranchTaken ? branchPC : PC + 4;
+    if_of.tick();
+    of_ex.tick();
+    ex_ma.tick();
+    ma_rw.tick();
+//=================================================
+    maj_sep
+    printf("Summary:\n");
+    printf("\tPC=%03d: ", PC);
+    for (int i = 0; i < 14; i++) {
+        if (i % 5 == 0) printf("\n\t");
+        printf("r%02d=%04d, ", i, R[i]);
+    }
+    printf("sp=%04d, ra=%03d.", R[14], R[15]);
+    printf("\n");
+    maj_sep
+//=================================================
 }
 
 bool data_lock_conflict(word A, word B) {
@@ -308,6 +360,14 @@ bool data_lock_conflict(word A, word B) {
     int dest = (opcodeB == OPCODE_CALL) ? 15 : (A & 0x3C00000) >> 22;
     return src1 == dest || (!(opcodeA != OPCODE_ST && ((A & 0x4000000) >> 26)) && src2 == dest);
     return false;
+}
+
+bool branch_lock_condition(word A) {
+    int opcodeA = (A & 0xF8000000) >> 27;
+    bool isUBranch = (opcodeA == OPCODE_B) || (opcodeA == OPCODE_CALL) || (opcodeA == OPCODE_RET);
+    bool isBgt = opcodeA == OPCODE_BGT;
+    bool isBeq = opcodeA == OPCODE_BEQ;
+    return isUBranch || (isBeq && eq) || (isBgt && gt);
 }
 //=================================================
 word read_word(byte* mem, word address) {

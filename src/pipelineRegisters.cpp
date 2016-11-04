@@ -60,9 +60,10 @@ class IF_OF {
 
     public:
         void tick() {
-            output = input;
+            if (!bubble) output = input;
         }
         void update(int pc, word inst) {
+
             input.PC = pc;
             input.instruction = inst;
         }
@@ -75,6 +76,10 @@ class IF_OF {
         }
         bool hasBubble() const {
             return bubble;
+        }
+
+        void push_bubble() {
+            bubble = true;
         }
 
 };
@@ -95,9 +100,10 @@ class OF_EX {
         bool bubble;
     public:
         void tick() {
-            output = input;
+            if (!bubble) output = input;
         }
         void update(int pc, word b_target, word a, word b, word op2, word inst, Control ctrl) {
+
             input.PC = pc;
             input.branch_target = b_target;
             input.A = a;
@@ -159,9 +165,10 @@ class EX_MA {
 
     public:
         void tick() {
-            output = input;
+            if (!bubble) output = input;
         }
         void update(int pc, int b_PC, word alu, word op2, word inst, Control ctrl) {
+
             input.PC = pc;
             input.branchPC = b_PC;
             input.aluResult = alu;
@@ -169,11 +176,11 @@ class EX_MA {
             input.instruction = inst;
             input.control = ctrl;
         }
-        
+
         word getAluResult() const {
             return output.aluResult;
         }
-        
+
         word getbranchPC() const {
             return output.branchPC;
         }
@@ -198,6 +205,9 @@ class EX_MA {
             return bubble;
         }
 
+        void push_bubble() {
+            bubble = true;
+        }
 };
 
 class MA_RW {
@@ -215,7 +225,7 @@ class MA_RW {
 
     public:
         void tick() {
-            output = input;
+            if (!bubble) output = input;
         }
 
         void update(int pc, int b_PC, word ld_rslt, word alu, word inst, Control ctrl) {
@@ -246,13 +256,17 @@ class MA_RW {
         int getPc() const {
             return output.PC;
         }
-        
+
         word getbranchPC() const {
             return output.branchPC;
         }
 
         bool hasBubble() const {
             return bubble;
+        }
+
+        void push_bubble() {
+            bubble = true;
         }
 
 };
