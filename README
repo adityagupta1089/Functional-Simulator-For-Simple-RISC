@@ -1,6 +1,6 @@
-================================================
-Functional Simulator for simpleRISC processor
-================================================
+======================================================
+Functional/Pipeline Simulator for simpleRISC processor
+======================================================
 
 README
 
@@ -29,6 +29,7 @@ CS112-Project
       |- main.c
       |- Makefile
       |- mySimpleSim.c
+      |- pipelineRegisters.c
   |- test
       |- simple_add.mem
       |- prime.mem
@@ -45,11 +46,11 @@ CS112-Project
 Software description      
 --------------------
 
-            +------------------------------------------------+
-            |                                                |
-            | FUNCTIONAL_SIMULATOR_FOR_SIMPLE-RISC_PROCESSOR |
-            |                                                |
-            +------------------------------------------------+
+            +---------------------------------------------------------+
+            |                                                         |
+            | FUNCTIONAL/PIPELINE_SIMULATOR_FOR_SIMPLE-RISC_PROCESSOR |
+            |                                                         |
+            +---------------------------------------------------------+
 
 
   SimpleRISC ISA
@@ -92,7 +93,7 @@ Software description
  +----------------------------------+
 
  -> Our Simulator is computer program written in a C language the simulates the 
-    working of the SimpleRISC processor that run over the SimpleRISC ISA.
+    working of the SimpleRISC pipelined processor that run over the SimpleRISC ISA.
  -> The program takes the instructions from the .mem file.
  -> Each time the program takes the new instruction file, it resets the Register 
     file, PC and the instruction memory array MEM array.
@@ -114,8 +115,55 @@ Software description
               MEM array based on the control signal.
 
      - write_back(): Writes the results back to register file.
-
-
+     
+    
+  Pipelining
+ +--------+
+  
+ -> The notion of dividing a processor into a set of stages where the stages are 
+    ordered one after the other, and simultaneously process a set of instrunctons
+    by assigning an instruction to each stage is known as pipeling.
+    
+       +----+       +----+       +----+       +----+       +----+
+       | IF |  -->  | OF |  -->  | EX |  -->  | MA |  -->  | RW |
+       +----+       +----+       +----+       +----+       +----+
+   
+ -> When one instruction is in the EX stage, the next instruction can be in the OF
+    stage, and the subsequent instruction can be in the IF stage. We can asssume 
+    that we have 5 instructions simuntaneously being processed at the same time.
+ -> This stratergy ensure that we do have an idle stage in our processor because 
+    all the different unit is busy at any point in time.
+ -> As compared to the single cycle processor that finishes the execution of a new 
+    instruction every 'N' nanoseconds, the instruction throughput is 5 times higher 
+    for a pipelined processor.
+ -> A pipeline register is a register that is added between two consecutive pipeline 
+    stages(IF-OF, OF-EX, EX-MA, MA-RW). All the registers are connected to the common 
+    clock, and help in seamlessly transferring instructions between pipeline stages.
+    
+                          
+       +----+    +++   +----+    +++   +----+    +++   +----+    +++   +----+
+       | IF |  ->| |-> | OF |  ->| |-> | EX |  ->| |-> | MA |  ->| |-> | RW |
+       +----+    +++   +----+    +++   +----+    +++   +----+    +++   +----+
+                IF-OF           OF-EX           EX-MA           MA-RW 
+                
+  -> Example:
+  
+     [I1] : add r1, r2, r3
+     [I2] : sub r4, r2, r5           
+     [I3] : mul r5, r8, r9  
+     
+           
+                
+           | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+        ---+---|---|---|---|---|---|---+
+        IF | I1| I2| I3|   |   |   |   |
+        EX |   | I1| I2| I3|   |   |   |
+        OF |   |   | I1| I2| I3|   |   |
+        MA |   |   |   | I1| I2| I3|   |
+        RW |   |   |   |   | I1| I2|I3 | 
+        
+        
+ 
 
 How to build
 ------------
