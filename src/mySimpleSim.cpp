@@ -20,9 +20,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define min_sep printf("\t---------------------------------------------------------------\n");
-#define maj_sep printf("======================================================================\n");
-
 //=================================================
 // REGISTER FILE
 //=================================================
@@ -51,18 +48,23 @@ word branchPC;
 bool isBranchTaken;
 
 void run_simplesim() {
+    header();
+    int cycle = 1;
+    bool exit = false;
     while (1) {
+        printf("|  %3d ", cycle++);
         //assume all these on same line
         fetch();
         decode();
         execute();
         mem();
-        write_data_memory();
-        update(); //negative edge of clock
+        write_back();
+        exit = update(); //negative edge of clock
+        info();
+        if (exit) break;
     }
-    /*
-
-     */
+    write_data_memory();
+    exit_info();
 }
 
 //=================================================
@@ -72,10 +74,6 @@ void run_simplesim() {
 // reset all registers and memory content to 0
 //=================================================
 void reset_proc() {
-    if_of.push_bubble();
-    of_ex.push_bubble();
-    ex_ma.push_bubble();
-    ma_rw.push_bubble();
     for (int i = 0; i < 14; i++)
         R[i] = 0;
     R[14] = 4000 - 8;
@@ -125,6 +123,25 @@ void write_data_memory() {
     fclose(fp);
 }
 
+void header() {
+    //---
+    printf("+======+======+======+======+======+======");
+    for (int i = 0; i < 14; i++)
+        printf("+======");
+    printf("+=======+======+\n");
+    //---
+    printf("|  CY  |  IF  |  OF  |  EX  |  MA  |  RW  ");
+    //---
+    for (int i = 0; i < 14; i++)
+        printf("|  r%-2d ", i);
+    printf("|  sp   |  ra  |\n");
+    //---
+    printf("+======+======+======+======+======+======");
+    for (int i = 0; i < 14; i++)
+        printf("+======");
+    printf("+=======+======+\n");
+    //---
+}
 //=================================================
 // FETCH
 //
@@ -133,12 +150,14 @@ void write_data_memory() {
 //=================================================
 void fetch() {
     word instruction = read_word(MEM, PC);
+    if (instruction == -1) {
+        printf("| ---- ");
+        if_of.push_bubble();
+        return;
+    }
     if_of.update(PC, instruction);
-    //=================================================
-    // INFORMATION
-    //=================================================
-    printf("\tRead 0x%X (instruction) from %d (PC)\n", instruction, PC);
-    min_sep
+
+    printf("| I%-3d ", PC / 4);
 }
 
 //=================================================
@@ -153,7 +172,7 @@ void decode() {
     // CONTROL SIGNALS
     //=================================================
     if (if_of.hasBubble()) {
-        printf("Decode: bubble\n");
+        printf("| ---- ");
         of_ex.push_bubble();
         return;
     }
@@ -184,16 +203,8 @@ void decode() {
     word A = operand1;
     word B = control.isImmediate ? immx : operand2;
     of_ex.update(PC, branch_target, B, A, operand2, instruction, control);
-    //=================================================
-    // INFORMATION
-    //=================================================
-    printf("Decode:\n");
-    printf("\tImmediate and Branch Target Calculation:\n");
-    printf("\t\tCalculated immediate as %d using u=%u,h=%d\n", immx, u, h);
-    printf("\t\tand branch target as %d\n", branch_target);
-    printf("\tOperand Calculation:\n");
-    printf("\t\tCalculated operand(1) = %d, operand(2) = %d\n", operand1, operand2);
-    min_sep
+
+    printf("| I%-3d ", PC / 4);
 }
 
 //=================================================
@@ -203,7 +214,7 @@ void decode() {
 //=================================================
 void execute() {
     if (of_ex.hasBubble()) {
-        printf("Execute: bubble\n");
+        printf("| ---- ");
         ex_ma.push_bubble();
         return;
     }
@@ -245,15 +256,8 @@ void execute() {
     control.isBranchTaken = control.isUBranch || (control.isBeq && eq) || (control.isBgt && gt);    //isUBranch||(isBeq&&flags.E)||(isBgt&&flags.GT)
     isBranchTaken = control.isBranchTaken;
     ex_ma.update(PC, branchPC, aluResult, operand2, instruction, control);
-    //=================================================
-    // INFORMATION
-    //=================================================
-    printf("\tALU Unit:\n");
-    printf("\t\tPerformed required operation on A=%u, B=%u to get\n", A, B);
-    printf("\t\taluResult=%u, gt=%d,eq=%d\n", aluResult, gt, eq);
-    printf("\tBranch Unit:\n");
-    printf("\t\tCalculated Branch PC as %u and isBranchTaken(%d)\n", branchPC, isBranchTaken);
-    min_sep
+
+    printf("| I%-3d ", PC / 4);
 }
 
 //=================================================
@@ -263,7 +267,7 @@ void execute() {
 //=================================================
 void mem() {
     if (ex_ma.hasBubble()) {
-        printf("MEM: bubble\n");
+        printf("| ---- ");
         ma_rw.push_bubble();
         return;
     }
@@ -280,14 +284,7 @@ void mem() {
 
     ma_rw.update(PC, branch_PC, ldResult, aluResult, instruction, control);
 
-    //=================================================
-    // INFORMATION
-    //=================================================
-    printf("Memory:\n");
-    if (control.isLd) printf("\tLoaded MEM[%u]=%u\n", aluResult, ldResult);
-    else if (control.isSt) printf("\tStored MEM[%u]=%u\n", aluResult, operand2);
-    else printf("\tNo load/store to do\n");
-    min_sep
+    printf("| I%-3d ", PC / 4);
 
 }
 
@@ -298,7 +295,7 @@ void mem() {
 //=================================================
 void write_back() {
     if (ma_rw.hasBubble()) {
-        printf("RW: bubble\n");
+        printf("| ---- ");
         return;
     }
     word instruction = ma_rw.getInstruction();
@@ -314,18 +311,12 @@ void write_back() {
         else R[(instruction & 0x3C00000) >> 22] = result;
     }
 
-    //=================================================
-    // INFORMATION
-    //=================================================
-    printf("Write Back:\n");
-    if (!control.isWb) printf("\tNo Writeback\n");
-    else printf("\tStored %u intro R[%d]\n", result, control.isCall ? 15 : (instruction & 0x3C00000) >> 22);
-    min_sep
+    printf("| I%-3d ", PC / 4);
 
 }
 //=================================================
 
-void update() {
+bool update() {
     if (data_lock_conflict(if_of.getInstruction(), of_ex.getInstruction()) || data_lock_conflict(if_of.getInstruction(), ex_ma.getInstruction()) || data_lock_conflict(if_of.getInstruction(), ma_rw.getInstruction())) of_ex.push_bubble();
     if (branch_lock_condition(ex_ma.getInstruction())) {
         if_of.push_bubble();
@@ -336,30 +327,19 @@ void update() {
     of_ex.tick();
     ex_ma.tick();
     ma_rw.tick();
-//=================================================
-    maj_sep
-    printf("Summary:\n");
-    printf("\tPC=%03d: ", PC);
-    for (int i = 0; i < 14; i++) {
-        if (i % 5 == 0) printf("\n\t");
-        printf("r%02d=%04d, ", i, R[i]);
-    }
-    printf("sp=%04d, ra=%03d.", R[14], R[15]);
-    printf("\n");
-    maj_sep
-//=================================================
+    return if_of.hasBubble() && of_ex.hasBubble() && ex_ma.hasBubble() && ma_rw.hasBubble();
 }
 
 bool data_lock_conflict(word A, word B) {
+    if (A == -1 || B == -1) return false;
     int opcodeA = (A & 0xF8000000) >> 27;
     int opcodeB = (B & 0xF8000000) >> 27;
     if (opcodeA == OPCODE_NOP || opcodeA == OPCODE_B || opcodeA == OPCODE_BEQ || opcodeA == OPCODE_BGT || opcodeA == OPCODE_CALL) return false;
     if (opcodeB == OPCODE_NOP || opcodeB == OPCODE_CMP || opcodeB == OPCODE_ST || opcodeB == OPCODE_B || opcodeB == OPCODE_BEQ || opcodeB == OPCODE_BGT || opcodeB == OPCODE_RET) return false;
     int src1 = (opcodeA == OPCODE_RET) ? 15 : (A & 0x3C0000) >> 18;
     int src2 = (opcodeA == OPCODE_ST) ? (A & 0x3C00000) >> 22 : (A & 0x3C0000) >> 18;
-    int dest = (opcodeB == OPCODE_CALL) ? 15 : (A & 0x3C00000) >> 22;
+    int dest = (opcodeB == OPCODE_CALL) ? 15 : (B & 0x3C00000) >> 22;
     return src1 == dest || (!(opcodeA != OPCODE_ST && ((A & 0x4000000) >> 26)) && src2 == dest);
-    return false;
 }
 
 bool branch_lock_condition(word A) {
@@ -368,6 +348,20 @@ bool branch_lock_condition(word A) {
     bool isBgt = opcodeA == OPCODE_BGT;
     bool isBeq = opcodeA == OPCODE_BEQ;
     return isUBranch || (isBeq && eq) || (isBgt && gt);
+}
+
+//=================================================
+void info() {
+    for (int i = 0; i < 14; i++)
+        printf("|  %-3d ", R[i]);
+    printf("|  %-4d |  %-3d |\n", R[14], R[15]);
+}
+void exit_info() {
+    printf("+======+======+======+======+======+======");
+    for (int i = 0; i < 14; i++)
+        printf("+======");
+    printf("+=======+======+\n");
+    printf("Exited.\n");
 }
 //=================================================
 word read_word(byte* mem, word address) {

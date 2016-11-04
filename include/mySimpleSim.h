@@ -33,6 +33,9 @@ void write_data_memory();
 //=================================================
 // INSTRUCTION STAGES
 //=================================================
+
+void header();
+
 //reads from the instruction memory and updates the instruction register
 void fetch();
 //reads the instruction register, reads operand1, operand2 from register file, decides the operation to be performed in execute stage
@@ -43,8 +46,10 @@ void execute();
 void mem();
 //writes the results back to register file
 void write_back();
-// TODO
-void update();
+
+bool update();
+void info();
+void exit_info();
 
 bool data_lock_conflict(word A, word B);
 bool branch_lock_condition(word A);

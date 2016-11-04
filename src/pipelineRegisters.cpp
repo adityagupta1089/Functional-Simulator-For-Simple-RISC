@@ -56,14 +56,22 @@ class IF_OF {
         };
         data input;
         data output;
-        bool bubble;
+        bool bubble_in;
+        bool bubble_out;
 
     public:
-        void tick() {
-            if (!bubble) output = input;
+        IF_OF() {
+            bubble_out = true;
+            bubble_in = true;
+            output.instruction = -1;
         }
-        void update(int pc, word inst) {
+        void tick() {
+            if (!bubble_in) output = input;
+            bubble_out = bubble_in;
+        }
 
+        void update(int pc, word inst) {
+            bubble_in = false;
             input.PC = pc;
             input.instruction = inst;
         }
@@ -75,11 +83,11 @@ class IF_OF {
             return output.PC;
         }
         bool hasBubble() const {
-            return bubble;
+            return bubble_out;
         }
 
         void push_bubble() {
-            bubble = true;
+            bubble_in = true;
         }
 
 };
@@ -97,13 +105,20 @@ class OF_EX {
         };
         data input;
         data output;
-        bool bubble;
+        bool bubble_in;
+        bool bubble_out;
     public:
+        OF_EX() {
+            bubble_out = true;
+            bubble_in = true;
+            output.instruction = -1;
+        }
         void tick() {
-            if (!bubble) output = input;
+            if (!bubble_in) output = input;
+            bubble_out = bubble_in;
         }
         void update(int pc, word b_target, word a, word b, word op2, word inst, Control ctrl) {
-
+            bubble_in = false;
             input.PC = pc;
             input.branch_target = b_target;
             input.A = a;
@@ -142,11 +157,11 @@ class OF_EX {
         }
 
         bool hasBubble() const {
-            return bubble;
+            return bubble_out;
         }
 
         void push_bubble() {
-            bubble = true;
+            bubble_in = true;
         }
 };
 
@@ -161,14 +176,21 @@ class EX_MA {
         };
         data input;
         data output;
-        bool bubble;
+        bool bubble_in;
+        bool bubble_out;
 
     public:
+        EX_MA() {
+            bubble_out = true;
+            bubble_in = true;
+            output.instruction = -1;
+        }
         void tick() {
-            if (!bubble) output = input;
+            if (!bubble_in) output = input;
+            bubble_out = bubble_in;
         }
         void update(int pc, int b_PC, word alu, word op2, word inst, Control ctrl) {
-
+            bubble_in = false;
             input.PC = pc;
             input.branchPC = b_PC;
             input.aluResult = alu;
@@ -202,11 +224,11 @@ class EX_MA {
         }
 
         bool hasBubble() const {
-            return bubble;
+            return bubble_out;
         }
 
         void push_bubble() {
-            bubble = true;
+            bubble_in = true;
         }
 };
 
@@ -221,14 +243,22 @@ class MA_RW {
         };
         data input;
         data output;
-        bool bubble;
+        bool bubble_in;
+        bool bubble_out;
 
     public:
+        MA_RW() {
+            bubble_out = true;
+            bubble_in = true;
+            output.instruction = -1;
+        }
         void tick() {
-            if (!bubble) output = input;
+            if (!bubble_in) output = input;
+            bubble_out = bubble_in;
         }
 
         void update(int pc, int b_PC, word ld_rslt, word alu, word inst, Control ctrl) {
+            bubble_in = false;
             input.PC = pc;
             input.branchPC = b_PC;
             input.aluResult = alu;
@@ -262,11 +292,11 @@ class MA_RW {
         }
 
         bool hasBubble() const {
-            return bubble;
+            return bubble_out;
         }
 
         void push_bubble() {
-            bubble = true;
+            bubble_in = true;
         }
 
 };
