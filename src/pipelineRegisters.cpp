@@ -23,8 +23,10 @@
 #define OPCODE_RET 20
 
 struct Control {
-        bool isSt, isBeq, isBgt, isRet, isImmediate, isWb, isUBranch, isBranchTaken, isAdd, isSub;
-        bool isCmp, isMul, isDiv, isMod, isAnd, isOr, isNot, isMov, isLd, isLsl, isLsr, isAsr, isCall;
+        bool isSt, isBeq, isBgt, isRet, isImmediate, isWb, isUBranch, isBranchTaken,
+                isAdd, isSub;
+        bool isCmp, isMul, isDiv, isMod, isAnd, isOr, isNot, isMov, isLd, isLsl, isLsr,
+                isAsr, isCall;
         void update(word opcode, int I) {
             isAdd = opcode == OPCODE_ADD || opcode == OPCODE_LD || opcode == OPCODE_ST;
             isSub = opcode == OPCODE_SUB;
@@ -41,10 +43,13 @@ struct Control {
             isMov = opcode == OPCODE_MOV;
             isCall = opcode == OPCODE_CALL;
             isLd = opcode == OPCODE_LD;
-            isUBranch = (opcode == OPCODE_B) || (opcode == OPCODE_CALL) || (opcode == OPCODE_RET);
+            isUBranch = (opcode == OPCODE_B) || (opcode == OPCODE_CALL)
+                    || (opcode == OPCODE_RET);
             isBgt = opcode == OPCODE_BGT;
             isBeq = opcode == OPCODE_BEQ;
-            isWb = opcode == OPCODE_ADD || isSub || isMul || isDiv || isMod || isAnd || isOr || isNot || isMov || isLd || isLsl || isLsr || isAsr || isCall;
+            isWb = opcode == OPCODE_ADD || isSub || isMul || isDiv || isMod || isAnd
+                    || isOr || isNot || isMov || isLd || isLsl || isLsr || isAsr
+                    || isCall;
             isImmediate = I;
             isSt = opcode == OPCODE_ST;
             isRet = opcode == OPCODE_RET;
@@ -68,6 +73,9 @@ class IF_OF {
         }
         void tick() {
             if (!bubble_in) output = input;
+            bubble_out = bubble_in;
+        }
+        void bubble_tick() {
             bubble_out = bubble_in;
         }
 
@@ -117,7 +125,8 @@ class OF_EX {
             if (!bubble_in) output = input;
             bubble_out = bubble_in;
         }
-        void update(int pc, word b_target, word a, word b, word op2, word inst, Control ctrl) {
+        void update(int pc, word b_target, word a, word b, word op2, word inst,
+                Control ctrl) {
             bubble_in = false;
             input.PC = pc;
             input.branch_target = b_target;

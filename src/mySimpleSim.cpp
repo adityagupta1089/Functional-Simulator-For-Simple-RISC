@@ -42,21 +42,22 @@ OF_EX of_ex;
 EX_MA ex_ma;
 MA_RW ma_rw;
 //=================================================
-// EX -> OF
+// EX -> IF
 //=================================================
-word branchPC;
-bool isBranchTaken;
+word ex_if_branchPC;
+bool ex_if_isBranchTaken;
 
 void run_simplesim() {
-    header();
     int cycle = 1;
     bool not_exit = false;
     while (1) {
-        printf("|  %3d ", cycle++);
+        if ((cycle - 1) % 10 == 0) header();
+        printf("|  %4d ", cycle++);
         not_exit = fetch() + decode() + execute() + mem() + write_back();
-        update(); //negative edge of clock
         info();
-        if (!not_exit || cycle > 1000) break; //TODO safety (<1000)
+        update(); //negative edge of clock
+        //TODO move `info();` here
+        if (!not_exit) break;
     }
     write_data_memory();
     exit_info();
@@ -120,18 +121,18 @@ void write_data_memory() {
 
 void header() {
     //---
-    printf("+======+======+======+======+======+======");
+    printf("+=======+======+======+======+======+======");
     for (int i = 0; i < 14; i++)
         printf("+======");
     printf("+=======+======+\n");
     //---
-    printf("|  CY  |  IF  |  OF  |  EX  |  MA  |  RW  ");
+    printf("|  CY   |  IF  |  OF  |  EX  |  MA  |  RW  ");
     //---
     for (int i = 0; i < 14; i++)
         printf("|  r%-2d ", i);
     printf("|  sp   |  ra  |\n");
     //---
-    printf("+======+======+======+======+======+======");
+    printf("+=======+======+======+======+======+======");
     for (int i = 0; i < 14; i++)
         printf("+======");
     printf("+=======+======+\n");
@@ -254,7 +255,10 @@ bool execute() {
     word branchPC = control.isRet ? A : branch_target;
     control.isBranchTaken = control.isUBranch || (control.isBeq && eq)
             || (control.isBgt && gt); //isUBranch||(isBeq&&flags.E)||(isBgt&&flags.GT)
-    isBranchTaken = control.isBranchTaken;
+
+    ex_if_isBranchTaken = control.isBranchTaken;
+    ex_if_branchPC = branchPC;
+
     ex_ma.update(PC, branchPC, aluResult, operand2, instruction, control);
 
     printf("| I%-3d ", PC / 4);
@@ -328,15 +332,17 @@ void update() {
                     || (!ma_rw.hasBubble()
                             && data_lock_conflict(if_of.getInstruction(),
                                     ma_rw.getInstruction())));
-    bool branch_conflict = !ex_ma.hasBubble()
-            && branch_lock_condition(ex_ma.getInstruction());
-    if (data_conflict) of_ex.push_bubble();
-    if (branch_conflict) {
-        if_of.push_bubble();
-        of_ex.push_bubble();
+    bool branch_conflict = !of_ex.hasBubble()
+            && branch_lock_condition(of_ex.getInstruction());
+    if (data_conflict || branch_conflict) of_ex.push_bubble();
+    if (branch_conflict) if_of.push_bubble();
+    if (!data_conflict) {
+        PC = ex_if_isBranchTaken ? ex_if_branchPC : PC + 4;
+        if_of.tick();
+    } else {
+        if_of.bubble_tick();
     }
-    if (!data_conflict && !branch_conflict) PC = isBranchTaken ? branchPC : PC + 4;
-    if (!data_conflict) if_of.tick();
+    //printf("BL(%d), DL(%d)", branch_conflict, data_conflict);
     of_ex.tick();
     ex_ma.tick();
     ma_rw.tick();
