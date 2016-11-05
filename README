@@ -14,7 +14,8 @@ Table of contents
 
 Directory Structure:
 --------------------
-CS112-Project
+//TODO
+CS111-Project
   |
   |- bin
       |
@@ -177,61 +178,17 @@ For cleaning the project:
 
 How to execute
 --------------
-./mySimpleSim test/input_file.mem
+../bin/mySimpleSim ../test/input_file.mem
 
 
 Output
 ------
- After the execution of the program, the MEM array is written in the 
- 'data_out.mem' file and the state of the variables is printed on the 
- console and also stored in a 'summary.txt' file as shown:
- 
- 
- +--------------------------------------------------------------------------------------+
- |        ======================================================================        |
- |        CYCLE ****                                                                    |
- |        ======================================================================        |
- |        Instruction Fetch:                                                            |  
- |             Read 0x******** (instruction) from * (PC)                                |
- |          ---------------------------------------------------------------             |
- |        Decode:                                                                       |
- |             Immediate and Branch Target Calculation:                                 |
- |                Calculated immediate as * using u=*,h=*                               | 
- |                and branch target as **********                                       |
- |             Operand Calculation:                                                     | 
- |                Calculated operand(1) = *, operand(2) = *                             |
- |             ---------------------------------------------------------------          | 
- |        Execute:                                                                      |
- |             Control Signals:                                                         |
- |                Calculated opcode as * and respective signals:                        |
- |                    isAdd(*),isSub(*),isCmp(*),isMul(*),isDiv(*)                      | 
- |                    isMod(*),isLsl(*),isLsr(*),isAsr(*), isOr(*)                      | 
- |                    isAnd(*),isNot(*),isMov(*),isCall(*),isLd(*)                      | 
- |                    isUBranch(*),isBgt(*),isBeq(*),isWb(*),                           |
- |                    isImmediate(*)                                                    |
- |             ALU Unit:                                                                |
- |                Performed required operation on A=*, B=* to get                       |
- |                aluResult=*, gt=*,eq=*                                                |
- |             Branch Unit:                                                             |
- |                Calculated Branch PC as ********** and isBranchTaken(*)               | 
- |             ---------------------------------------------------------------          |
- |        Memory:                                                                       |
- |           No load/store to do                                                        | 
- |           ---------------------------------------------------------------            |
- |        Write Back:                                                                   |
- |             Stored * intro R[*]                                                      |
- |             ---------------------------------------------------------------          | 
- |       Summary:                                                                       |
- |           PC=***:                                                                    |
- |             r00=****, r01=****, r02=****, r03=****, r04=****,                        |
- |             r05=****, r06=****, r07=****, r08=****, r09=****,                        |
- |             r10=****, r11=****, r12=****, r13=****, sp=****, ra=****.                |
- |                                                                                      |
- +--------------------------------------------------------------------------------------+
+//TODO changed output
 
 
 Test Results
 --------------
+//TODO add others
 1. simple_add.mem
     Calculates 4(r1)+12(r2)=16(r3).
     
@@ -263,3 +220,5 @@ Test Results
 8. array_add.mem 
     Creates an array of size 100 and initializes A[i]=i and
     sums them to get 5050 into r2.
+    
+ 
