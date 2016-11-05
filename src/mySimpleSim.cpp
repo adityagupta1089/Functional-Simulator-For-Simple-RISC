@@ -403,7 +403,7 @@ void exit_info(int cycles) {
     for (int i = 0; i < 14; i++)
         printf("+======");
     printf("+=======+======+\n");
-    printf("Exited. Took %d cycles with %spipelining.\n", cycles - (is_pipelined ? 2 : 1),
+    printf("Exited. Took %d cycles with %spipelining.\n", cycles - 2,
             is_pipelined ? "" : "no ");
 }
 //=================================================
