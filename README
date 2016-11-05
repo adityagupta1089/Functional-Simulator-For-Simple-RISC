@@ -235,7 +235,7 @@ Test Results
 1. simple_add.mem
     Calculates 4(r1)+12(r2)=16(r3).
     
-2. prime.mem
+2. prime.mem // possible problem?
     Calculats whether 1729 (r1) is prime or not 1 
     (r0=isPrime)
     
@@ -260,6 +260,6 @@ Test Results
     chained (3 total) functions and switch case.
     Stores result 29416(d) into r6.
     
-8. array_add.mem
+8. array_add.mem 
     Creates an array of size 100 and initializes A[i]=i and
     sums them to get 5050 into r2.

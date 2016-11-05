@@ -1,6 +1,8 @@
 bin/
 .settings/
 src/data_out.mem
+src/output.txt
+test/test.mem
 data_out.mem
 .checkstyle
 .cproject

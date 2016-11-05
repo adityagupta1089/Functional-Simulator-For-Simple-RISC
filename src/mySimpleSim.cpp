@@ -35,7 +35,7 @@ static byte MEM[4000];
 //=================================================
 // PIPELINE REGISTERS
 //=================================================
-static int PC;
+static int global_PC;
 
 IF_OF if_of;
 OF_EX of_ex;
@@ -53,10 +53,11 @@ void run_simplesim() {
     while (1) {
         if ((cycle - 1) % 10 == 0) header();
         printf("|  %4d ", cycle++);
+        // these are still running serially, but we can assume them to be
+        // running in parallel for the cycle
         not_exit = fetch() + decode() + execute() + mem() + write_back();
-        info();
         update(); //negative edge of clock
-        //TODO move `info();` here
+        info();
         if (!not_exit) break;
     }
     write_data_memory();
@@ -74,7 +75,7 @@ void reset_proc() {
         R[i] = 0;
     R[14] = 4000 - 8;
     R[15] = 0;
-    PC = 0;
+    global_PC = 0;
     for (int i = 0; i < 4000; i += 4)
         write_word(MEM, i, -1);
 }
@@ -145,15 +146,15 @@ void header() {
 // the instruction register
 //=================================================
 bool fetch() {
-    word instruction = read_word(MEM, PC);
+    word instruction = read_word(MEM, global_PC);
     if (instruction == -1) {
         printf("| ---- ");
         if_of.push_bubble();
         return false;
     }
-    if_of.update(PC, instruction);
+    if_of.update(global_PC, instruction);
 
-    printf("| I%-3d ", PC / 4);
+    printf("| I%-3d ", global_PC / 4);
     return true;
 }
 
@@ -216,6 +217,7 @@ bool execute() {
     if (of_ex.hasBubble()) {
         printf("| ---- ");
         ex_ma.push_bubble();
+        ex_if_isBranchTaken = false;
         return false;
     }
     word instruction = of_ex.getInstruction();
@@ -336,11 +338,9 @@ void update() {
             && branch_lock_condition(of_ex.getInstruction());
     if (data_conflict || branch_conflict) of_ex.push_bubble();
     if (branch_conflict) if_of.push_bubble();
-    if (!data_conflict) {
-        PC = ex_if_isBranchTaken ? ex_if_branchPC : PC + 4;
+    if (!data_conflict || branch_conflict) {
+        global_PC = ex_if_isBranchTaken ? ex_if_branchPC : global_PC + 4;
         if_of.tick();
-    } else {
-        if_of.bubble_tick();
     }
     //printf("BL(%d), DL(%d)", branch_conflict, data_conflict);
     of_ex.tick();
@@ -358,8 +358,8 @@ bool data_lock_conflict(word A, word B) {
             || opcodeB == OPCODE_RET) return false;
     int src1 = (opcodeA == OPCODE_RET) ? 15 : (A & 0x3C0000) >> 18;    //?ra:rs1
     int src2 = (opcodeA == OPCODE_ST) ? (A & 0x3C00000) >> 22 : (A & 0x3C000) >> 14; //?rd:rs2
-    int dest = (opcodeB == OPCODE_CALL) ? 15 : (B & 0x3C00000) >> 22;
-    return src1 == dest
+    int dest = (opcodeB == OPCODE_CALL) ? 15 : (B & 0x3C00000) >> 22;   //?ra:rd
+    return (opcodeA != OPCODE_MOV && opcodeA != OPCODE_NOT && src1 == dest)
             || (!(opcodeA != OPCODE_ST && ((A & 0x4000000) >> 26)) && src2 == dest);
 }
 

@@ -75,9 +75,6 @@ class IF_OF {
             if (!bubble_in) output = input;
             bubble_out = bubble_in;
         }
-        void bubble_tick() {
-            bubble_out = bubble_in;
-        }
 
         void update(int pc, word inst) {
             bubble_in = false;
