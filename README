@@ -192,8 +192,8 @@ Test Results
 1. simple_add.mem
     Calculates 4(r1)+12(r2)=16(r3).
     
-2. prime.mem // possible problem?
-    Calculats whether 1729 (r1) is prime or not 1 
+2. prime.mem
+    Calculats whether 1729 (r1) is prime or not 0 
     (r0=isPrime)
     
 3. matrix.mem
