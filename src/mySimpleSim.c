@@ -88,6 +88,8 @@ void run_simplesim() {
         // SUMMARY
         //=================================================
         printf("CYCLE %04d \n", cycle++);
+        if (cycle == 198)
+            printf("Problem\n");
         maj_sep
         //=================================================
         fetch();
@@ -203,7 +205,7 @@ void decode() {
     bit u = (instruction_word & 0x10000) >> 16;
     bit h = (instruction_word & 0x20000) >> 17;
     if (h) immx <<= 16;
-    else if (((instruction_word & 0x8000) >> 8) && !u) immx |= 0xFFFC0000; //if negative sign extension
+    else if (((instruction_word & 0x8000) >> 8) && !u) immx |= 0xFFFF0000; //if negative sign extension
     branch_target = (instruction_word & 0x7FFFFFF) << 2;
     if ((branch_target & 0x10000000) >> 28) branch_target += 0xE0000000; // if negative extending sign
     branch_target += PC;
@@ -221,7 +223,9 @@ void decode() {
     isRet = opcode == 20;
     isSt = opcode == 15;
     operand1 = isRet ? R[15] : R[(instruction_word & 0x3C0000) >> 18]; //?ra:rs1
-    operand2 = isSt ? R[(instruction_word & 0x3C00000) >> 22] : R[(instruction_word & 0x3C000) >> 14]; //?rd:rs2
+    operand2 =
+            isSt ? R[(instruction_word & 0x3C00000) >> 22] : R[(instruction_word & 0x3C000)
+                           >> 14]; //?rd:rs2
     //=================================================
     // INFORMATION
     //=================================================
@@ -260,7 +264,8 @@ void execute() {
     isUBranch = (opcode == 18) || (opcode == 19) || (opcode == 20);
     isBgt = opcode == 17;
     isBeq = opcode == 16;
-    isWb = opcode == 0 || isSub || isMul || isDiv || isMod || isAnd || isOr || isNot || isMov || isLd || isLsl || isLsr || isAsr || isCall;
+    isWb = opcode == 0 || isSub || isMul || isDiv || isMod || isAnd || isOr || isNot
+            || isMov || isLd || isLsl || isLsr || isAsr || isCall;
     isImmediate = ((instruction_word & 0x4000000) >> 26);
     //=================================================
     // INFORMATION
@@ -268,10 +273,14 @@ void execute() {
     printf("Execute:\n");
     printf("\tControl Signals:\n");
     printf("\t\tCalculated opcode as %d and respective signals:\n", opcode);
-    printf("\t\t\tisAdd(%d),isSub(%d),isCmp(%d),isMul(%d),isDiv(%d)\n", isAdd, isSub, isCmp, isMul, isDiv);
-    printf("\t\t\tisMod(%d),isLsl(%d),isLsr(%d),isAsr(%d), isOr(%d)\n", isMod, isLsl, isLsr, isAsr, isOr);
-    printf("\t\t\tisAnd(%d),isNot(%d),isMov(%d),isCall(%d),isLd(%d)\n", isAnd, isNot, isMov, isCall, isLd);
-    printf("\t\t\tisUBranch(%d),isBgt(%d),isBeq(%d),isWb(%d),\n\t\t\tisImmediate(%d)\n", isUBranch, isBgt, isBeq, isWb, isImmediate);
+    printf("\t\t\tisAdd(%d),isSub(%d),isCmp(%d),isMul(%d),isDiv(%d)\n", isAdd, isSub,
+            isCmp, isMul, isDiv);
+    printf("\t\t\tisMod(%d),isLsl(%d),isLsr(%d),isAsr(%d), isOr(%d)\n", isMod, isLsl,
+            isLsr, isAsr, isOr);
+    printf("\t\t\tisAnd(%d),isNot(%d),isMov(%d),isCall(%d),isLd(%d)\n", isAnd, isNot,
+            isMov, isCall, isLd);
+    printf("\t\t\tisUBranch(%d),isBgt(%d),isBeq(%d),isWb(%d),\n\t\t\tisImmediate(%d)\n",
+            isUBranch, isBgt, isBeq, isWb, isImmediate);
     //=================================================
     // ALU UNIT
     //=================================================
@@ -283,13 +292,11 @@ void execute() {
     else if (isDiv) aluResult = A / B;
     else if (isMod) aluResult = A % B;
     else if (isCmp) {
-        if (A > B) gt = 1;
-        else gt = 0;
-        if (A == B) eq = 1;
-        else eq = 0;
+        gt = A > B;
+        eq = A == B;
     } else if (isAnd) aluResult = A & B;
     else if (isOr) aluResult = A | B;
-    else if (isNot) aluResult = !B;
+    else if (isNot) aluResult = ~B;
     else if (isMov) aluResult = B;
     else if (isLsl) aluResult = A << B;
     else if (isLsr) aluResult = A >> B;
@@ -304,12 +311,13 @@ void execute() {
     // BRANCH UNIT
     //=================================================
     branchPC = isRet ? operand1 : branch_target;
-    isBranchTaken = isUBranch || (isBeq && eq) || (isBgt && gt);    //isUBranch||(isBeq&&flags.E)||(isBgt&&flags.GT)
+    isBranchTaken = isUBranch || (isBeq && eq) || (isBgt && gt); //isUBranch||(isBeq&&flags.E)||(isBgt&&flags.GT)
     //=================================================
     // INFORMATION
     //=================================================
     printf("\tBranch Unit:\n");
-    printf("\t\tCalculated Branch PC as %u and isBranchTaken(%d)\n", branchPC, isBranchTaken);
+    printf("\t\tCalculated Branch PC as %u and isBranchTaken(%d)\n", branchPC,
+            isBranchTaken);
     min_sep
 }
 
@@ -347,7 +355,8 @@ void write_back() {
     //=================================================
     printf("Write Back:\n");
     if (!isWb) printf("\tNo Writeback\n");
-    else printf("\tStored %u intro R[%d]\n", result, isCall ? 15 : (instruction_word & 0x3C00000) >> 22);
+    else printf("\tStored %u intro R[%d]\n", result,
+            isCall ? 15 : (instruction_word & 0x3C00000) >> 22);
     min_sep
 }
 
