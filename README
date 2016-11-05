@@ -14,23 +14,20 @@ Table of contents
 
 Directory Structure:
 --------------------
-//TODO
+
 CS111-Project
   |
   |- bin
       |
       |- mySimpleSim
-  |- doc
-      |
-      |- design-doc.docx
   |- include
       |
       |- mySimpleSim.h
   |- src
-      |- main.c
+      |- main.cpp
       |- Makefile
-      |- mySimpleSim.c
-      |- pipelineRegisters.c
+      |- mySimpleSim.cpp
+      |- pipelineRegisters.cpp
   |- test
       |- simple_add.mem
       |- prime.mem
@@ -178,7 +175,8 @@ For cleaning the project:
 
 How to execute
 --------------
-../bin/mySimpleSim ../test/input_file.mem
+	$cd src
+	$../bin/mySimpleSim ../test/input_file.mem
 
 
 Output
@@ -188,13 +186,14 @@ Output
 
 Test Results
 --------------
-//TODO add others
+
 1. simple_add.mem
     Calculates 4(r1)+12(r2)=16(r3).
     
 2. prime.mem
-    Calculats whether 1729 (r1) is prime or not 0 
-    (r0=isPrime)
+    Calculats whether 1729 (r1) is prime or not  
+    (r0=isPrime) which comes out to be 0 (divisible
+    by 7)
     
 3. matrix.mem
     See corresponding '.asm' file for this testcase 
@@ -217,8 +216,14 @@ Test Results
     chained (3 total) functions and switch case.
     Stores result 29416(d) into r6.
     
-8. array_add.mem 
+8. array_add.mem
     Creates an array of size 100 and initializes A[i]=i and
     sums them to get 5050 into r2.
+    
+9. gcd.mem
+	Finds gcd of 5142(r0) and 9936(r1) into r0(6)
+	
+10. factorial_iterative.mem
+	Finds factorial of 10(r0) into r1(3628800)
     
  
