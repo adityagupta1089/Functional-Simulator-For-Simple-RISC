@@ -26,7 +26,7 @@ typedef char byte;
 //=================================================
 // TYPEDEFS
 //=================================================
-void run_simplesim();
+void run_simplesim(char* pipeline);
 void reset_proc();
 void load_program_memory(char* file_name);
 void write_data_memory();
@@ -47,9 +47,10 @@ bool mem();
 //writes the results back to register file
 bool write_back();
 
-void update();
+void update_pipeline();
+void update_non_pipeline();
 void info();
-void exit_info();
+void exit_info(int cycles);
 
 bool data_lock_conflict(word A, word B);
 bool branch_lock_condition(word A);

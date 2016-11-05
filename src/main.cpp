@@ -23,8 +23,8 @@
 int main(int argc, char** argv) {
     //=================================================
     byte* prog_mem_file;
-    if (argc < 2) {
-        printf("Incorrect number of arguments. Please invoke the simulator \n\t./mySimpleSim <input mem file> \n");
+    if (argc < 3) {
+        printf("Incorrect number of arguments. Please invoke the simulator \n\t../mySimpleSim <input mem file> <pipeline: 0/1>\n");
         exit(1);
     }
     //=================================================
@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     //load the program memory
     load_program_memory(argv[1]);
     //run the simulator
-    run_simplesim();
+    run_simplesim(argv[2]);
     //=================================================
     return 1;
 }

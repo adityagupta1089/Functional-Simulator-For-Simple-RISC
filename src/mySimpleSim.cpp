@@ -20,6 +20,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+static bool fetch_bubble = false;
+static bool fetch_bubble_in = false;
+static bool is_pipelined = false;
 //=================================================
 // REGISTER FILE
 //=================================================
@@ -47,21 +50,23 @@ MA_RW ma_rw;
 word ex_if_branchPC;
 bool ex_if_isBranchTaken;
 
-void run_simplesim() {
+void run_simplesim(char* pipeline) {
+    is_pipelined = *pipeline == '1';
     int cycle = 1;
-    bool not_exit = false;
+    bool pipeline_empty = true;
     while (1) {
         if ((cycle - 1) % 10 == 0) header();
         printf("|  %4d ", cycle++);
         // these are still running serially, but we can assume them to be
         // running in parallel for the cycle
-        not_exit = fetch() + decode() + execute() + mem() + write_back();
-        update(); //negative edge of clock
+        pipeline_empty = !(fetch() + decode() + execute() + mem() + write_back());
         info();
-        if (!not_exit) break;
+        if (is_pipelined) update_pipeline();
+        else update_non_pipeline();
+        if (pipeline_empty || cycle > 1000) break;
     }
     write_data_memory();
-    exit_info();
+    exit_info(cycle);
 }
 
 //=================================================
@@ -147,11 +152,14 @@ void header() {
 //=================================================
 bool fetch() {
     word instruction = read_word(MEM, global_PC);
-    if (instruction == -1) {
+    if (instruction == -1 || fetch_bubble_in) {
+        fetch_bubble = true; //for non pipeline
         printf("| ---- ");
         if_of.push_bubble();
         return false;
+        fetch_bubble_in = false;
     }
+    fetch_bubble = false;
     if_of.update(global_PC, instruction);
 
     printf("| I%-3d ", global_PC / 4);
@@ -217,7 +225,7 @@ bool execute() {
     if (of_ex.hasBubble()) {
         printf("| ---- ");
         ex_ma.push_bubble();
-        ex_if_isBranchTaken = false;
+        if (is_pipelined) ex_if_isBranchTaken = false;
         return false;
     }
     word instruction = of_ex.getInstruction();
@@ -324,7 +332,7 @@ bool write_back() {
 }
 //=================================================
 
-void update() {
+void update_pipeline() {
     bool data_conflict = !if_of.hasBubble()
             && ((!of_ex.hasBubble()
                     && data_lock_conflict(if_of.getInstruction(), of_ex.getInstruction()))
@@ -371,6 +379,18 @@ bool branch_lock_condition(word A) {
     bool isBeq = opcodeA == OPCODE_BEQ;
     return isUBranch || (isBeq && eq) || (isBgt && gt);
 }
+//=================================================
+void update_non_pipeline() {
+    if_of.tick();
+    of_ex.tick();
+    ex_ma.tick();
+    ma_rw.tick();
+    if (fetch_bubble && if_of.hasBubble() && of_ex.hasBubble() && ex_ma.hasBubble()
+            && ma_rw.hasBubble()) {
+        global_PC = ex_if_isBranchTaken ? ex_if_branchPC : global_PC + 4;
+        fetch_bubble_in = false;
+    } else fetch_bubble_in = true;
+}
 
 //=================================================
 void info() {
@@ -378,12 +398,13 @@ void info() {
         printf("|  %-3d ", R[i]);
     printf("|  %-4d |  %-3d |\n", R[14], R[15]);
 }
-void exit_info() {
-    printf("+======+======+======+======+======+======");
+void exit_info(int cycles) {
+    printf("+=======+======+======+======+======+======");
     for (int i = 0; i < 14; i++)
         printf("+======");
     printf("+=======+======+\n");
-    printf("Exited.\n");
+    printf("Exited. Took %d cycles with %spipelining.\n", cycles - 2,
+            is_pipelined ? "" : "no ");
 }
 //=================================================
 word read_word(byte* mem, word address) {
