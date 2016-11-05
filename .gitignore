@@ -3,6 +3,7 @@ bin/
 src/data_out.mem
 src/output.txt
 src/summary.txt
+test/test.mem
 data_out.mem
 .checkstyle
 .cproject
