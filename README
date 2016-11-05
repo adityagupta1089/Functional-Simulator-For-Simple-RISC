@@ -19,9 +19,6 @@ CS112-Project
   |- bin
       |
       |- mySimpleSim
-  |- doc
-      |
-      |- design-doc.docx
   |- include
       |
       |- mySimpleSim.h
@@ -129,14 +126,15 @@ For cleaning the project:
 
 How to execute
 --------------
-./mySimpleSim test/input_file.mem
+	$cd src
+	$../mySimpleSim ../test/input_file.mem
 
 
 Output
 ------
  After the execution of the program, the MEM array is written in the 
  'data_out.mem' file and the state of the variables is printed on the 
- console and also stored in a 'summary.txt' file as shown:
+ console as shown:
  
  
  +--------------------------------------------------------------------------------------+
@@ -188,8 +186,9 @@ Test Results
     Calculates 4(r1)+12(r2)=16(r3).
     
 2. prime.mem
-    Calculats whether 1729 (r1) is prime or not 1 
-    (r0=isPrime)
+    Calculats whether 1729 (r1) is prime or not  
+    (r0=isPrime) which comes out to be 0 (divisible
+    by 7)
     
 3. matrix.mem
     See corresponding '.asm' file for this testcase 
@@ -215,3 +214,9 @@ Test Results
 8. array_add.mem
     Creates an array of size 100 and initializes A[i]=i and
     sums them to get 5050 into r2.
+    
+9. gcd.mem
+	Finds gcd of 5142(r0) and 9936(r1) into r0(6)
+	
+10. factorial_iterative.mem
+	Finds factorial of 10(r0) into r1(3628800)
