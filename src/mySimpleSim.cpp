@@ -196,7 +196,7 @@ bool decode() {
     bit u = (instruction & 0x10000) >> 16;
     bit h = (instruction & 0x20000) >> 17;
     if (h) immx <<= 16;
-    else if (((instruction & 0x8000) >> 8) && !u) immx |= 0xFFFC0000; //if negative sign extension
+    else if (((instruction & 0x8000) >> 8) && !u) immx |= 0xFFFF0000; //if negative sign extension
     int branch_target = (instruction & 0x7FFFFFF) << 2;
     if ((branch_target & 0x10000000) >> 28) branch_target += 0xE0000000; // if negative extending sign
     branch_target += PC;
@@ -254,7 +254,7 @@ bool execute() {
         else eq = 0;
     } else if (control.isAnd) aluResult = A & B;
     else if (control.isOr) aluResult = A | B;
-    else if (control.isNot) aluResult = !B;
+    else if (control.isNot) aluResult = ~B;
     else if (control.isMov) aluResult = B;
     else if (control.isLsl) aluResult = A << B;
     else if (control.isLsr) aluResult = A >> B;
@@ -403,7 +403,7 @@ void exit_info(int cycles) {
     for (int i = 0; i < 14; i++)
         printf("+======");
     printf("+=======+======+\n");
-    printf("Exited. Took %d cycles with %spipelining.\n", cycles - 2,
+    printf("Exited. Took %d cycles with %spipelining.\n", cycles - (is_pipelined ? 2 : 1),
             is_pipelined ? "" : "no ");
 }
 //=================================================
