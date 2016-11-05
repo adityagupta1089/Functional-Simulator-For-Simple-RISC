@@ -88,8 +88,6 @@ void run_simplesim() {
         // SUMMARY
         //=================================================
         printf("CYCLE %04d \n", cycle++);
-        if (cycle == 198)
-            printf("Problem\n");
         maj_sep
         //=================================================
         fetch();
