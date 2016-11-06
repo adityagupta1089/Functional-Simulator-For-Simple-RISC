@@ -20,6 +20,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+//=================================================
+// NON PIPELINE VARIABLES
+//=================================================
 static bool fetch_bubble = false;
 static bool fetch_bubble_in = false;
 static bool is_pipelined = false;
@@ -45,10 +48,16 @@ OF_EX of_ex;
 EX_MA ex_ma;
 MA_RW ma_rw;
 //=================================================
-// EX -> IF
+// EX -> IF VARIABLES
 //=================================================
 word ex_if_branchPC;
 bool ex_if_isBranchTaken;
+
+//=================================================
+// RUN_SIMPLESIM
+//
+// it is used to run all the units of simulator
+//=================================================
 
 void run_simplesim(char* pipeline) {
     is_pipelined = *pipeline == '1';
@@ -63,7 +72,7 @@ void run_simplesim(char* pipeline) {
         info();
         if (is_pipelined) update_pipeline();
         else update_non_pipeline();
-        if (pipeline_empty || cycle > 1000) break;
+        if (pipeline_empty) break;
     }
     write_data_memory();
     exit_info(cycle);
@@ -210,6 +219,8 @@ bool decode() {
 
     word A = operand1;
     word B = control.isImmediate ? immx : operand2;
+    
+    //=================================================
     of_ex.update(PC, branch_target, A, B, operand2, instruction, control);
 
     printf("| I%-3d ", PC / 4);
@@ -269,6 +280,7 @@ bool execute() {
     ex_if_isBranchTaken = control.isBranchTaken;
     ex_if_branchPC = branchPC;
 
+    //=================================================
     ex_ma.update(PC, branchPC, aluResult, operand2, instruction, control);
 
     printf("| I%-3d ", PC / 4);
@@ -297,6 +309,7 @@ bool mem() {
     if (control.isLd) ldResult = read_word(MEM, aluResult);
     else if (control.isSt) write_word(MEM, aluResult, operand2);
 
+    //=================================================
     ma_rw.update(PC, branch_PC, ldResult, aluResult, instruction, control);
 
     printf("| I%-3d ", PC / 4);
@@ -326,10 +339,19 @@ bool write_back() {
         else R[(instruction & 0x3C00000) >> 22] = result;
     }
 
+    //=================================================
     printf("| I%-3d ", PC / 4);
     return true;
 
 }
+
+//=================================================
+// UPDATE_PIPELINE
+//
+// updates the output registers with the input 
+// registers at the negative clock edge and also 
+// checks the data dependencies and takes the
+// required action
 //=================================================
 
 void update_pipeline() {
@@ -350,27 +372,40 @@ void update_pipeline() {
         global_PC = ex_if_isBranchTaken ? ex_if_branchPC : global_PC + 4;
         if_of.tick();
     }
-    //printf("BL(%d), DL(%d)", branch_conflict, data_conflict);
     of_ex.tick();
     ex_ma.tick();
     ma_rw.tick();
 }
 
+//=================================================
+// DATA_LOCK_CONFLICT
+//
+// Algorithm to detect conflicts between the
+// instructions 
+//=================================================
 bool data_lock_conflict(word A, word B) {
     int opcodeA = (A & 0xF8000000) >> 27;
     int opcodeB = (B & 0xF8000000) >> 27;
     if (opcodeA == OPCODE_NOP || opcodeA == OPCODE_B || opcodeA == OPCODE_BEQ
-            || opcodeA == OPCODE_BGT || opcodeA == OPCODE_CALL) return false;
+            || opcodeA == OPCODE_BGT || opcodeA == OPCODE_CALL) return false;// Does not read from any registers
     if (opcodeB == OPCODE_NOP || opcodeB == OPCODE_CMP || opcodeB == OPCODE_ST
             || opcodeB == OPCODE_B || opcodeB == OPCODE_BEQ || opcodeB == OPCODE_BGT
-            || opcodeB == OPCODE_RET) return false;
+            || opcodeB == OPCODE_RET) return false; //Does not write to any registers
+     // set the sources       
     int src1 = (opcodeA == OPCODE_RET) ? 15 : (A & 0x3C0000) >> 18;    //?ra:rs1
     int src2 = (opcodeA == OPCODE_ST) ? (A & 0x3C00000) >> 22 : (A & 0x3C000) >> 14; //?rd:rs2
+     // set teh destination
     int dest = (opcodeB == OPCODE_CALL) ? 15 : (B & 0x3C00000) >> 22;   //?ra:rd
+     // detect conflicts
     return (opcodeA != OPCODE_MOV && opcodeA != OPCODE_NOT && src1 == dest)
             || (!(opcodeA != OPCODE_ST && ((A & 0x4000000) >> 26)) && src2 == dest);
 }
 
+//=================================================
+// BRANCH_LOCK_CONDITION
+//
+// Algorithm to detect if branch is taken
+//=================================================
 bool branch_lock_condition(word A) {
     int opcodeA = (A & 0xF8000000) >> 27;
     bool isUBranch = (opcodeA == OPCODE_B) || (opcodeA == OPCODE_CALL)
@@ -379,6 +414,10 @@ bool branch_lock_condition(word A) {
     bool isBeq = opcodeA == OPCODE_BEQ;
     return isUBranch || (isBeq && eq) || (isBgt && gt);
 }
+//=================================================
+// UPDATE_NON_PIPELINE
+//
+// fetches instruction when pipeline is empty
 //=================================================
 void update_non_pipeline() {
     if_of.tick();
@@ -391,6 +430,7 @@ void update_non_pipeline() {
         fetch_bubble_in = false;
     } else fetch_bubble_in = true;
 }
+
 
 //=================================================
 void info() {
