@@ -176,7 +176,7 @@ For cleaning the project:
 How to execute
 --------------
 	$cd src
-	$../bin/mySimpleSim <input file, these are in `..test/`> <pipeline 0/1>
+	$../bin/mySimpleSim <input file, these are in `../test/`> <pipeline 0/1>
 
 
 Output
