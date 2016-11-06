@@ -90,7 +90,7 @@ Software description
   Simulator for SimpleRISC processor
  +----------------------------------+
 
- -> Our Simulator is computer program written in a C language the simulates the 
+ -> Our Simulator is computer program written in a C++ language the simulates the 
     working of the SimpleRISC pipelined processor that run over the SimpleRISC ISA.
  -> The program takes the instructions from the .mem file.
  -> Each time the program takes the new instruction file, it resets the Register 
@@ -116,11 +116,11 @@ Software description
      
     
   Pipelining
- +--------+
+ +----------+
   
  -> The notion of dividing a processor into a set of stages where the stages are 
     ordered one after the other, and simultaneously process a set of instrunctons
-    by assigning an instruction to each stage is known as pipeling.
+    by assigning an instruction to each stage is known as pipelining.
     
        +----+       +----+       +----+       +----+       +----+
        | IF |  -->  | OF |  -->  | EX |  -->  | MA |  -->  | RW |
@@ -181,7 +181,23 @@ How to execute
 
 Output
 ------
-//TODO changed output
+
++=======+======+======+======+======+======+======+======+======+======+======+======+======+======+======+======+======+======+======+======+=======+======+
+|  CY   |  IF  |  OF  |  EX  |  MA  |  RW  |  r0  |  r1  |  r2  |  r3  |  r4  |  r5  |  r6  |  r7  |  r8  |  r9  |  r10 |  r11 |  r12 |  r13 |  sp   |  ra  |
++=======+======+======+======+======+======+======+======+======+======+======+======+======+======+======+======+======+======+======+======+=======+======+
+|   *** | ---- | ---- | ---- | ---- | ---- |  *   |  **** |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  **** |  *   |
+|   *** | ---- | ---- | ---- | ---- | ---- |  *   |  **** |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  **** |  *   |
+|   *** | ---- | ---- | ---- | ---- | ---- |  *   |  **** |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  **** |  *   |
+|   *** | ---- | ---- | ---- | ---- | ---- |  *   |  **** |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  **** |  *   |
+|   *** | ---- | ---- | ---- | ---- | ---- |  *   |  **** |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  **** |  *   |
+|   *** | ---- | ---- | ---- | ---- | ---- |  *   |  **** |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  **** |  *   |
+|   *** | ---- | ---- | ---- | ---- | ---- |  *   |  **** |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  **** |  *   |
+|   *** | ---- | ---- | ---- | ---- | ---- |  *   |  **** |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  **** |  *   |
+|   *** | ---- | ---- | ---- | ---- | ---- |  *   |  **** |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  **** |  *   |
+|   *** | ---- | ---- | ---- | ---- | ---- |  *   |  **** |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  *   |  **** |  *   |
+
+
+Exited. Took **** cycles with pipelining / no pipelining.
 
 
 Test Results
